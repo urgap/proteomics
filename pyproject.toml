@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "urgap-domain-specific"
+version = "0.0.1"
+description = "Urgap domain specific extension"
+requires-python = ">=3.12"
+dependencies = [
+    "urgap",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio>=0.23",
+    "urgap[dev]",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["urgap"]
