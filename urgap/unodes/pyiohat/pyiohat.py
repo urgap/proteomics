@@ -32,8 +32,6 @@ class Pyiohat(urgap.unode.UNodeBase):
                 "min": 0,
                 "max": 1,
             },
-            urgap.uftypes.proteomics.denovosearch.CASANOVO_MZTAB: {"min": 0, "max": 1},
-            urgap.uftypes.proteomics.denovosearch.INSTANOVO_CSV: {"min": 0, "max": 1},
             urgap.uftypes.proteomics.MODS_XML: {"min": 0, "max": -1},
             urgap.uftypes.ms.SPECTRA_META_CSV: {"min": 1, "max": -1},
             urgap.uftypes.proteomics.FASTA: {"min": 1, "max": 1},
@@ -69,20 +67,10 @@ class Pyiohat(urgap.unode.UNodeBase):
         quant_input_file = utrace.input_files.get_path_objects_by_uftype(
             uftype=urgap.uftypes.proteomics.quantification.FLASHLFQ_PSM_TSV,
         )
-        casanovo_input_file = utrace.input_files.get_path_objects_by_uftype(
-        uftype=urgap.uftypes.proteomics.denovosearch.CASANOVO_MZTAB,
-        )
-        instanovo_input_file = utrace.input_files.get_path_objects_by_uftype(
-        uftype=urgap.uftypes.proteomics.denovosearch.INSTANOVO_CSV,
-        )
         if len(search_input_file) == 1 and len(quant_input_file) == 0:
             input_file = search_input_file[0]
         elif len(search_input_file) == 0 and len(quant_input_file) == 1:
             input_file = quant_input_file[0]
-        elif len(casanovo_input_file) == 1:
-            input_file = casanovo_input_file[0]
-        elif len(instanovo_input_file) == 1:
-            input_file = instanovo_input_file[0]
         else:
             logging.warning("Needs at least one quant input or one search input file")
 

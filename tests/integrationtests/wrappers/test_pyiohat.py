@@ -1,11 +1,12 @@
 """Integration test for MSFragger."""
 
-import pandas as pd
-
 import urgap
 
+_TEST_FOLDER = urgap._test_folder  # noqa: SLF001
 
-def test_pyiohat():
+
+def test_pyiohat() -> None:
+    """Test Pyiohat node runs and produces a unified output file."""
     urd = urgap.URunDict(
         {
             "parameters": {
@@ -15,26 +16,26 @@ def test_pyiohat():
                 },
             },
             "unode_parameters": {
-                "storage_base_uri": f"file://{urgap._test_folder}/data",
+                "storage_base_uri": f"file://{_TEST_FOLDER}/data",
             },
         },
     )
     ufiles = (
         urgap.UFile(
             uri=f"file://"
-            f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.dbsearch.MSGFPLUS_MZID}#mzids/BSA1_msgfplus_2021_03_22.mzid"
+            f"{_TEST_FOLDER}/data?uftype={urgap.uftypes.proteomics.dbsearch.MSGFPLUS_MZID}#mzids/BSA1_msgfplus_2021_03_22.mzid",
         ),
         urgap.UFile(
             uri=f"file://"
-            f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.FASTA}#fastas/BSA1.fasta"
+            f"{_TEST_FOLDER}/data?uftype={urgap.uftypes.proteomics.FASTA}#fastas/BSA1.fasta",
         ),
         urgap.UFile(
             uri=f"file://"
-            f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.MODS_XML}#usermods/usermods.xml"
+            f"{_TEST_FOLDER}/data?uftype={urgap.uftypes.proteomics.MODS_XML}#usermods/usermods.xml",
         ),
         urgap.UFile(
-            uri=f"file://{urgap._test_folder}/data?uftype={urgap.uftypes.ms.SPECTRA_META_CSV}#meta_data"
-            f"/5832277fafa758daf43584d38502eb47_1.spectra_meta.csv"
+            uri=f"file://{_TEST_FOLDER}/data?uftype={urgap.uftypes.ms.SPECTRA_META_CSV}#meta_data"
+            f"/5832277fafa758daf43584d38502eb47_1.spectra_meta.csv",
         ),
     )
 
@@ -43,7 +44,8 @@ def test_pyiohat():
     assert unified_files[0].path.exists() is True
 
 
-def test_pyiohat_metadata_file():
+def test_pyiohat_metadata_file() -> None:
+    """Test Pyiohat node produces a metadata output file."""
     urd = urgap.URunDict(
         {
             "parameters": {
@@ -53,26 +55,26 @@ def test_pyiohat_metadata_file():
                 },
             },
             "unode_parameters": {
-                "storage_base_uri": f"file://{urgap._test_folder}/data",
+                "storage_base_uri": f"file://{_TEST_FOLDER}/data",
             },
         },
     )
     ufiles = (
         urgap.UFile(
             uri=f"file://"
-            f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.dbsearch.MSGFPLUS_MZID}#mzids/BSA1_msgfplus_2021_03_22.mzid"
+            f"{_TEST_FOLDER}/data?uftype={urgap.uftypes.proteomics.dbsearch.MSGFPLUS_MZID}#mzids/BSA1_msgfplus_2021_03_22.mzid",
         ),
         urgap.UFile(
             uri=f"file://"
-            f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.FASTA}#fastas/BSA1.fasta"
+            f"{_TEST_FOLDER}/data?uftype={urgap.uftypes.proteomics.FASTA}#fastas/BSA1.fasta",
         ),
         urgap.UFile(
             uri=f"file://"
-            f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.MODS_XML}#usermods/usermods.xml"
+            f"{_TEST_FOLDER}/data?uftype={urgap.uftypes.proteomics.MODS_XML}#usermods/usermods.xml",
         ),
         urgap.UFile(
-            uri=f"file://{urgap._test_folder}/data?uftype={urgap.uftypes.ms.SPECTRA_META_CSV}#meta_data"
-            f"/5832277fafa758daf43584d38502eb47_1.spectra_meta.csv"
+            uri=f"file://{_TEST_FOLDER}/data?uftype={urgap.uftypes.ms.SPECTRA_META_CSV}#meta_data"
+            f"/5832277fafa758daf43584d38502eb47_1.spectra_meta.csv",
         ),
     )
 
@@ -81,7 +83,8 @@ def test_pyiohat_metadata_file():
     assert unified_files[1].path.exists() is True
 
 
-def test_pyiohat_wo_xml_file():
+def test_pyiohat_wo_xml_file() -> None:
+    """Test Pyiohat node runs without a mods XML file."""
     urd = urgap.URunDict(
         {
             "parameters": {
@@ -91,22 +94,22 @@ def test_pyiohat_wo_xml_file():
                 },
             },
             "unode_parameters": {
-                "storage_base_uri": f"file://{urgap._test_folder}/data",
+                "storage_base_uri": f"file://{_TEST_FOLDER}/data",
             },
         },
     )
     ufiles = (
         urgap.UFile(
             uri=f"file://"
-            f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.dbsearch.MSGFPLUS_MZID}#mzids/BSA1_msgfplus_2021_03_22.mzid"
+            f"{_TEST_FOLDER}/data?uftype={urgap.uftypes.proteomics.dbsearch.MSGFPLUS_MZID}#mzids/BSA1_msgfplus_2021_03_22.mzid",
         ),
         urgap.UFile(
             uri=f"file://"
-            f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.FASTA}#fastas/BSA1.fasta"
+            f"{_TEST_FOLDER}/data?uftype={urgap.uftypes.proteomics.FASTA}#fastas/BSA1.fasta",
         ),
         urgap.UFile(
-            uri=f"file://{urgap._test_folder}/data?uftype={urgap.uftypes.ms.SPECTRA_META_CSV}#meta_data"
-            f"/5832277fafa758daf43584d38502eb47_1.spectra_meta.csv"
+            uri=f"file://{_TEST_FOLDER}/data?uftype={urgap.uftypes.ms.SPECTRA_META_CSV}#meta_data"
+            f"/5832277fafa758daf43584d38502eb47_1.spectra_meta.csv",
         ),
     )
 
@@ -115,7 +118,8 @@ def test_pyiohat_wo_xml_file():
     assert unified_files[0].path.exists() is True
 
 
-def test_pyiohat_wo_xml_file_metadata_file():
+def test_pyiohat_wo_xml_file_metadata_file() -> None:
+    """Test Pyiohat node produces a metadata file when run without a mods XML file."""
     urd = urgap.URunDict(
         {
             "parameters": {
@@ -125,22 +129,22 @@ def test_pyiohat_wo_xml_file_metadata_file():
                 },
             },
             "unode_parameters": {
-                "storage_base_uri": f"file://{urgap._test_folder}/data",
+                "storage_base_uri": f"file://{_TEST_FOLDER}/data",
             },
         },
     )
     ufiles = (
         urgap.UFile(
             uri=f"file://"
-            f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.dbsearch.MSGFPLUS_MZID}#mzids/BSA1_msgfplus_2021_03_22.mzid"
+            f"{_TEST_FOLDER}/data?uftype={urgap.uftypes.proteomics.dbsearch.MSGFPLUS_MZID}#mzids/BSA1_msgfplus_2021_03_22.mzid",
         ),
         urgap.UFile(
             uri=f"file://"
-            f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.FASTA}#fastas/BSA1.fasta"
+            f"{_TEST_FOLDER}/data?uftype={urgap.uftypes.proteomics.FASTA}#fastas/BSA1.fasta",
         ),
         urgap.UFile(
-            uri=f"file://{urgap._test_folder}/data?uftype={urgap.uftypes.ms.SPECTRA_META_CSV}#meta_data"
-            f"/5832277fafa758daf43584d38502eb47_1.spectra_meta.csv"
+            uri=f"file://{_TEST_FOLDER}/data?uftype={urgap.uftypes.ms.SPECTRA_META_CSV}#meta_data"
+            f"/5832277fafa758daf43584d38502eb47_1.spectra_meta.csv",
         ),
     )
 

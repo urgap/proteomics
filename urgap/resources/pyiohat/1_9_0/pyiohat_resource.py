@@ -2,21 +2,21 @@
 
 import argparse
 import json
+
 from pathlib import Path
 
-# !/usr/bin/env python
 from pyiohat import Unify
 
 
 def main(
-    search_result,
-    fasta_file,
-    spectrum_meta_data,
-    xml_file_list,
-    output_file,
-    metadata_file,
-    parameters,
-):
+    search_result: str | Path,
+    fasta_file: str | Path,
+    spectrum_meta_data: str | Path,
+    xml_file_list: list,
+    output_file: str | Path,
+    metadata_file: str | Path,
+    parameters: str,
+) -> None:
     """Convert engine format to unified format using pyProtista-idents.
 
     Args:
@@ -25,10 +25,10 @@ def main(
         spectrum_meta_data (str, Path): path to meta data file
         xml_file_list (list): list of modification xml files
         output_file (str, Path): output file path
+        metadata_file (str, Path): metadata output file path
         parameters (dict): pyProtista parameter collection
     """
     params = json.loads(parameters)
-    # params = {p["translated_key"]: p["translated_value"] for p in parameters.values()}
     params["database"] = fasta_file
     params["rt_pickle_name"] = spectrum_meta_data
     params["xml_file_list"] = [Path(f) for f in xml_file_list]
@@ -36,9 +36,8 @@ def main(
     df = u.get_dataframe()
     df.to_csv(output_file, index=False)
     metadata = u.get_metadata()
-    with open(metadata_file, 'w', encoding='utf‑8') as f:
+    with Path(metadata_file).open("w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2, sort_keys=True)
-
 
 
 if __name__ == "__main__":
