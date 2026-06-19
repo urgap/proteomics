@@ -1,8 +1,7 @@
-"""pyProstista resource."""
+"""pyiohat resource."""
 
 import argparse
 import json
-
 from pathlib import Path
 
 from pyiohat import Unify
@@ -15,9 +14,9 @@ def main(
     xml_file_list: list,
     output_file: str | Path,
     metadata_file: str | Path,
-    parameters: str,
+    parameters: str | Path,
 ) -> None:
-    """Convert engine format to unified format using pyProtista-idents.
+    """Convert engine format to unified format using pyiohat-idents.
 
     Args:
         search_result (str, Path): path to engine output file
@@ -26,9 +25,16 @@ def main(
         xml_file_list (list): list of modification xml files
         output_file (str, Path): output file path
         metadata_file (str, Path): metadata output file path
-        parameters (dict): pyProtista parameter collection
+        parameters (str, Path): json encoded parameters string or path to a json file
     """
-    params = json.loads(parameters)
+    # Check if parameters argument is an existing file path
+    is_file = Path(parameters).is_file()
+    if is_file:
+        with Path(parameters).open("r", encoding="utf-8") as f:
+            params = json.load(f)
+    else:
+        params = json.loads(parameters)
+
     params["database"] = fasta_file
     params["rt_pickle_name"] = spectrum_meta_data
     params["xml_file_list"] = [Path(f) for f in xml_file_list]
@@ -84,7 +90,7 @@ if __name__ == "__main__":
         "-p",
         "--parameters",
         dest="parameters",
-        help="json encoded parameters string",
+        help="json encoded parameters string or path to a json file",
     )
 
     args = parser.parse_args()

@@ -20,7 +20,7 @@ class Pyiohat(urgap.unode.UNodeBase):
         "name": "Pyiohat",
         "wrapper_version": {"major": 1, "minor": 0, "patch": 0},
         "versions": [
-            {"version": "1.9.0", "exe_path": "pyiohat/1_9_0/pyiohat-resource.py"},
+            {"version": "1.9.0", "exe_path": "pyiohat/1_9_0/pyiohat_resource.py"},
         ],
         "parameters_not_triggering_rerun": [],
         "input_uftypes": {
@@ -89,7 +89,6 @@ class Pyiohat(urgap.unode.UNodeBase):
         concatenated_meta.to_csv(tmp_md_file, index=False)
         self.tmp_files.append(tmp_md_file)
 
-
         output_file = utrace.output_files.get_path_objects_by_uftype(
             uftype=urgap.uftypes.proteomics.converter.PYIOHAT_CSV,
         )[0]
@@ -97,7 +96,9 @@ class Pyiohat(urgap.unode.UNodeBase):
             uftype=urgap.uftypes.proteomics.converter.PYIOHAT_JSON,
         )[0]
 
-        param_string = json.dumps(utrace.urun_dict.parameters[f"{self.META_INFO['unode_full_identifier']}"])
+        param_string = json.dumps(
+            utrace.urun_dict.parameters[f"{self.META_INFO['unode_full_identifier']}"]
+        )
         utrace.urun_dict.command_list = [
             "python",
             str(self.exe_path),
