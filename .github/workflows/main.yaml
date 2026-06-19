@@ -58,8 +58,8 @@ jobs:
         run: |
           pip install uv
           uv pip install pytest pytest-asyncio --system
-          uv pip install urgap["all"] --system
-          uv pip install .
+#          uv pip install urgap["all"] --system
+          uv pip install . --system
       - name: Run unit tests
         run: |
           pytest tests/unittests
