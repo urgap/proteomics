@@ -8,7 +8,8 @@ version = "0.0.1"
 description = "Urgap proteomics specific extension"
 requires-python = ">=3.11"
 dependencies = [
-    "urgap",
+    "urgap[all]",
+    "pymzml"
 ]
 
 [project.optional-dependencies]
