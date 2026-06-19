@@ -1,4 +1,4 @@
-"""pymzml resource."""
+"""pymzml2mgf resource."""
 
 import argparse
 import logging
@@ -138,6 +138,7 @@ def main(
     precursor_min_charge: int = 1,
     precursor_max_charge: int = 5,
     ion_mode: str = "pos",
+    max_num_peaks: int = 2000,
     signal_to_noise_threshold: float | None = None,
     **kwargs: str | float | None,
 ) -> Path:
@@ -219,6 +220,9 @@ def main(
             precursor_mz += precursor_mz * mz_correction_factor
 
             if len(peaks_2_write) == 0:
+                continue
+
+            if len(peaks_2_write) > max_num_peaks:
                 continue
 
             if (
@@ -354,6 +358,14 @@ if __name__ == "__main__":
         default="pos",
     )
     parser.add_argument(
+        "-mp",
+        "--max_num_peaks",
+        type=int,
+        dest="max_num_peaks",
+        help="maximum number of allowed peaks per spectrum",
+        default=2000,
+    )
+    parser.add_argument(
         "-sn",
         "--signal_noise_threshold",
         type=float,
@@ -375,5 +387,6 @@ if __name__ == "__main__":
         precursor_min_charge=args.min_charge,
         precursor_max_charge=args.max_charge,
         ion_mode=args.mode,
+        max_num_peaks=args.max_num_peaks,
         signal_to_noise_threshold=args.signal_noise_threshold,
     )

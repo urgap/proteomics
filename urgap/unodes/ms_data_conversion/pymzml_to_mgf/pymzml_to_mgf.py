@@ -16,7 +16,7 @@ class PymzMLToMGF(urgap.unode.UNodeBase):
         "versions": [
             {
                 "version": "2.6.0",
-                "exe_path": "MsDataConversion/pymzml_to_mgf/2_6_0/pymzml2mgf.py",
+                "exe_path": "ms_data_conversion/pymzml_to_mgf/2_6_0/pymzml2mgf.py",
             },
         ],
         "parameters_not_triggering_rerun": [],
