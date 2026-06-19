@@ -16,7 +16,7 @@ class PymzMLToIDXGZ(urgap.unode.UNodeBase):
         "versions": [
             {
                 "version": "2.6.0",
-                "exe_path": "MsDataConversion/PymzMLToIDXGZ/2_6_0/pymzml2idxgz.py",
+                "exe_path": "ms_data_conversion/pymzml_to_idxgz/2_6_0/pymzml_to_idxgz.py",
             },
         ],
         "parameters_not_triggering_rerun": [],
