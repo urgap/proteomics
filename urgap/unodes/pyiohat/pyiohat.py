@@ -97,7 +97,7 @@ class Pyiohat(urgap.unode.UNodeBase):
         )[0]
 
         param_string = json.dumps(
-            utrace.urun_dict.parameters[f"{self.META_INFO['unode_full_identifier']}"]
+            utrace.urun_dict.parameters[f"{self.META_INFO['unode_full_identifier']}"],
         )
         utrace.urun_dict.command_list = [
             "python",
