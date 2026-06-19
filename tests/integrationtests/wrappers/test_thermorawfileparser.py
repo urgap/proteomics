@@ -3,12 +3,13 @@ import pytest
 
 import urgap
 
+
 def test_wrapper_thermorawfileparser_2_0_0_simple(tmp_dir):
     ufiles = urgap.UFileList(
         [
             urgap.UFile(
                 uri=f"file://{urgap._test_folder}/data?uftype="
-                f"{urgap.uftypes.proteomics.THERMO_RAW}#raw/small.raw"
+                f"{urgap.uftypes.proteomics.THERMO_RAW}#ms_files/small.raw"
             )
         ]
     )
