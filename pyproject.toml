@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "urgap-domain-specific"
 version = "0.0.1"
 description = "Urgap domain specific extension"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 dependencies = [
     "urgap",
 ]
