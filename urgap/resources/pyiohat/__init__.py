@@ -1,3 +1,3 @@
-"""Pyiohat Resources"""
+"""Pyiohat Resources."""
 
 # Do not modify

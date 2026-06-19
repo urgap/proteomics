@@ -1,3 +1,3 @@
-"""Init Pyiohat Unode."""
+"""Init Pyiohat Resources."""
 
 # Do not modify
