@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import os
 import platform
@@ -13,6 +12,7 @@ from urllib.parse import urlparse
 
 import pytest
 import urllib3
+
 import urgap
 
 urgap._test_folder = Path(__file__).parent.resolve()
@@ -32,8 +32,7 @@ def ping(host):
 
 
 def check_ufile_can_be_tested(ufile):
-    """
-    Stub function to validate that a UFile object can be tested.
+    """Stub function to validate that a UFile object can be tested.
     Replace this logic with actual validation if needed.
     """
     if not isinstance(ufile, urgap.UFile):

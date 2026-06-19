@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import pytest
 import pymzml
+
 import urgap
 
 
@@ -9,7 +9,7 @@ def test_wrapper_PymzMLToIDXGZ(tmp_dir):
         [
             urgap.UFile(
                 uri=f"file://{urgap._test_folder}/data?uftype="
-                f"{urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML}#ms_files/BSA1.mzML"
+                f"{urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML}#ms_files/BSA1.mzML",
             ),
         ],
     )
@@ -21,7 +21,7 @@ def test_wrapper_PymzMLToIDXGZ(tmp_dir):
             "unode_parameters": {
                 "storage_base_uri": f"file://{tmp_dir}",
             },
-        }
+        },
     )
     node = urgap.init_unode("PymzMLToIDXGZ:2.6.0")
     output_files = node.run(
