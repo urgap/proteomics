@@ -3,6 +3,8 @@
 import json
 import logging
 
+from pathlib import Path
+
 import pandas as pd
 
 import urgap
@@ -96,9 +98,19 @@ class Pyiohat(urgap.unode.UNodeBase):
             uftype=urgap.uftypes.proteomics.converter.PYIOHAT_JSON,
         )[0]
 
-        param_string = json.dumps(
-            utrace.urun_dict.parameters[f"{self.META_INFO['unode_full_identifier']}"],
-        )
+        params_dict = utrace.urun_dict.parameters[f"{self.META_INFO['unode_full_identifier']}"]
+
+
+        use_param_file = utrace.urun_dict.unode_parameters.get("use_param_file", False)
+        if use_param_file:
+            tmp_params_file = str(utrace.output_files[0].path) + "_params.json"
+            with Path(tmp_params_file).open("w", encoding="utf-8") as f:
+                json.dump(params_dict, f)
+            self.tmp_files.append(tmp_params_file)
+            param_arg = tmp_params_file
+        else:
+            param_arg = json.dumps(params_dict)
+
         utrace.urun_dict.command_list = [
             "python",
             str(self.exe_path),
@@ -113,7 +125,8 @@ class Pyiohat(urgap.unode.UNodeBase):
             "--metadata_file",
             str(metadata_file),
             "--parameters",
-            param_string,
+            param_arg,
         ]
+
 
         return utrace
