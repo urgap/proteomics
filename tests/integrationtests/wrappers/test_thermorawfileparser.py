@@ -4,7 +4,8 @@ import pytest
 import urgap
 
 
-def test_wrapper_thermorawfileparser_2_0_0_simple(tmp_dir):
+@pytest.mark.parametrize("parameters", [{}, {"--msLevel": 2}])
+def test_wrapper_thermorawfileparser_2_0_0_simple(tmp_dir, parameters):
     ufiles = urgap.UFileList(
         [
             urgap.UFile(
@@ -16,7 +17,7 @@ def test_wrapper_thermorawfileparser_2_0_0_simple(tmp_dir):
     urun_dict = urgap.URunDict(
         {
             "parameters": {
-                "ThermoRawFileParser:2.0.0": {},
+                "ThermoRawFileParser:2.0.0": parameters,
             },
             "unode_parameters": {
                 "force": True,
@@ -31,4 +32,7 @@ def test_wrapper_thermorawfileparser_2_0_0_simple(tmp_dir):
     assert output_files[0].path.exists() is True
     with open(output_files[0].path, "r") as test_file:
         lines = [l for l in test_file]
+    if parameters == {}:
         assert len(lines) == 2620
+    else:
+        assert len(lines) != 2620
