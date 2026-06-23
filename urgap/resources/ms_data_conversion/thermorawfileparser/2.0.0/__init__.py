@@ -1,1 +1,1 @@
-"""ThermoRawFileParser:2.0.0"""
+"""ThermoRawFileParser:2.0.0."""

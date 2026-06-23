@@ -26,7 +26,7 @@ class ThermoRawFileParser(urgap.unode.UNodeBase):
             {
                 "version": "2.0.0",
                 "exe_path": "ms_data_conversion/thermorawfileparser/2.0.0/ThermoRawFileParser.exe",
-            }
+            },
         ],
         "parameters_not_triggering_rerun": [],
         "engine_type": ("converter",),
@@ -46,7 +46,7 @@ class ThermoRawFileParser(urgap.unode.UNodeBase):
         """,
     }
 
-    def __init__(self, *args: str, **kwargs: str):
+    def __init__(self, *args: str, **kwargs: str) -> None:
         """Initialize ThermoRawFileParser class."""
         super().__init__(*args, **kwargs)
 
@@ -66,16 +66,16 @@ class ThermoRawFileParser(urgap.unode.UNodeBase):
         Returns:
             UTrace object, combination of urun_dict, ufile_list and unode.meta.
         """
-        if sys.platform in ["win32"]:
+        if sys.platform in "win32":
             utrace.urun_dict.command_list = []
         else:
             utrace.urun_dict.command_list = ["mono"]
 
         input_file = utrace.input_files.get_path_objects_by_uftype(
-            urgap.uftypes.proteomics.THERMO_RAW
+            urgap.uftypes.proteomics.THERMO_RAW,
         )[0]
         output_file = utrace.output_files.get_path_objects_by_uftype(
-            urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML
+            urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML,
         )[0]
         utrace.urun_dict.command_list.extend(
             [
@@ -83,7 +83,7 @@ class ThermoRawFileParser(urgap.unode.UNodeBase):
                 f"-i={input_file!s}",
                 f"-b={output_file!s}",
                 "-f=1",
-            ]
+            ],
         )
         params = utrace.urun_dict.parameters[
             f"{self.META_INFO['unode_full_identifier']}"
