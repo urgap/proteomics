@@ -34,5 +34,5 @@ def test_wrapper_thermorawfileparser_2_0_0_simple(tmp_dir, parameters):
         lines = [l for l in test_file]
     if parameters == {}:
         assert len(lines) == 2620
-    else:
-        assert len(lines) != 2620
+    elif parameters == {"--msLevel": 2}:
+        assert len(lines) == 2066
