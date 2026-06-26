@@ -29,7 +29,7 @@ class Casanovo(urgap.unode.UNodeBase):
             urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML: {"min": 1, "max": 1},
             urgap.uftypes.proteomics.FASTA: {"min": 0, "max": 1},
         },
-        
+
         "output_uftypes": {
             urgap.uftypes.proteomics.denovosearch.CASANOVO_MZTAB: {"min": 1, "max": 1},
         },
