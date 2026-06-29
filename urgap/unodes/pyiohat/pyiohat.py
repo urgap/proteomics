@@ -3,8 +3,6 @@
 import json
 import logging
 
-from pathlib import Path
-
 import pandas as pd
 
 import urgap
@@ -37,6 +35,7 @@ class Pyiohat(urgap.unode.UNodeBase):
             urgap.uftypes.proteomics.MODS_XML: {"min": 0, "max": -1},
             urgap.uftypes.ms.SPECTRA_META_CSV: {"min": 1, "max": -1},
             urgap.uftypes.proteomics.FASTA: {"min": 1, "max": 1},
+            urgap.uftypes.proteomics.converter.PYIOHAT_JSON: {"min": 0, "max": 1},
         },
         "output_uftypes": {
             urgap.uftypes.proteomics.converter.PYIOHAT_CSV: {"min": 1, "max": 1},
@@ -101,13 +100,23 @@ class Pyiohat(urgap.unode.UNodeBase):
         params_dict = utrace.urun_dict.parameters[f"{self.META_INFO['unode_full_identifier']}"]
 
 
-        use_param_file = utrace.urun_dict.unode_parameters.get("use_param_file", False)
-        if use_param_file:
-            tmp_params_file = str(utrace.output_files[0].path) + "_params.json"
-            with Path(tmp_params_file).open("w", encoding="utf-8") as f:
-                json.dump(params_dict, f)
-            self.tmp_files.append(tmp_params_file)
-            param_arg = tmp_params_file
+        param_files = utrace.input_files.get_path_objects_by_uftype(
+            uftype=urgap.uftypes.proteomics.converter.PYIOHAT_JSON,
+        )
+
+        param_file_provided = len(param_files) == 1
+        params_dict_provided = bool(params_dict)
+
+        if param_file_provided and params_dict_provided:
+            msg = (
+                "Both a parameter file and parameters in the urun_dict were "
+                "provided for Pyiohat. Please provide only one."
+            )
+            raise ValueError(msg)
+
+
+        if param_file_provided:
+            param_arg = str(param_files[0])
         else:
             param_arg = json.dumps(params_dict)
 
