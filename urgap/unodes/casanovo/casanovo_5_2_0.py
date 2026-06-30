@@ -5,7 +5,6 @@ import logging
 import urgap
 
 
-
 class Casanovo(urgap.unode.UNodeBase):
     """Urgap wrapper for the casanovo_5_2_0 search engine.
 
