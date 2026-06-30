@@ -12,7 +12,6 @@ dependencies = [
     "pymzml>=2.5.0",
     "pyiohat>=1.9.0",
     "instanovo>=1.2.2",
-    "flowkit>=1.0.0"
 ]
 
 [project.optional-dependencies]
