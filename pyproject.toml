@@ -9,8 +9,9 @@ description = "Urgap proteomics specific extension"
 requires-python = ">=3.11"
 dependencies = [
     "urgap[all]",
-    "pymzml",
-    "simepy",
+    "pymzml>=2.5.0",
+    "pyiohat>=1.9.0",
+    "simepy>=0.2.1",
 ]
 
 [project.optional-dependencies]
@@ -20,9 +21,6 @@ dev = [
     "urgap[dev]",
 ]
 
-proteomics = [
-    'pymzml>=2.5.0'
-]
 
 [tool.hatch.build.targets.wheel]
 packages = ["urgap"]

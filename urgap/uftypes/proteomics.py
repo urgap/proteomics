@@ -33,6 +33,7 @@ proteomics.converter.ANY = "proteomics.converter.ANY"
 proteomics.converter.PYMZML_MGF = ".pymzml.mgf"
 proteomics.converter.PYMZML_IDXGZ = ".pymzml_idx.gz"
 proteomics.converter.PYIOHAT_CSV = ".pyiohat.csv"
+proteomics.converter.PYIOHAT_JSON = ".pyiohat.json"
 
 proteomics.validator = types.SimpleNamespace()
 proteomics.validator.ANY = "proteomics.validator.ANY"
