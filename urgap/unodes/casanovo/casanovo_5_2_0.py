@@ -104,8 +104,13 @@ class Casanovo(urgap.unode.UNodeBase):
             )[0]
             utrace.urun_dict.command_list.insert(3, fasta_file)
             # check if this is behaving the way you'd like it to
-            if len(fasta_file) == 0:
+            fasta_file_list = utrace.input_files.get_path_objects_by_uftype(
+                urgap.uftypes.proteomics.FASTA,
+            )
+            if len(fasta_file_list) == 0:
                 logging.error("Please input a Fasta file for database searching.")
+            fasta_file = fasta_file_list[0]
+            utrace.urun_dict.command_list.insert(3, fasta_file)
         elif search_mode == "sequence":
             # check ig this is the correct way of assessing the fasta files or the one above
             fasta_file_list = utrace.input_files.get_path_objects_by_uftype(
