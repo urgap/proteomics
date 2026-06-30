@@ -6,6 +6,10 @@ import pytest
 
 import urgap
 
+import os
+import subprocess
+import time 
+
 
 def test_instanovo_node_init() -> None:
     """Test that the Instanovo node can be initialized."""
@@ -101,3 +105,66 @@ def test_instanovo_urun_dict_model_used(model_used: str) -> None:
     params = urun_dict.parameters["Instanovo:1.2.2"]
     assert params["model_used"] == model_used
     assert params["model_used"] in ["transformer", "diffusion"]
+
+
+def test_instanovo_program_starts() -> None:
+    """Test that the instanovo CLI binary exists and starts executing."""
+    proc = subprocess.Popen(
+        ["instanovo", "--help"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    try:
+        time.sleep(2)
+        assert proc.poll() is None or proc.returncode == 0
+    finally:
+        if proc.poll() is None:
+            proc.terminate()
+            proc.wait(timeout=5)
+
+            
+def test_instanovo_predict_process_starts(tmp_path: Path) -> None:
+    """Test that `instanovo predict` actually launches (not completes).
+
+    Builds the config-path the same way Instanovo.preflight() does: relative
+    to instanovo's built-in configs directory, resolved via importlib.
+    """
+    mgf_file = tmp_path / "test.pymzml.mgf"
+    output_csv = tmp_path / "output.instanovo.csv"
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    config_file = config_dir / "default.yaml"
+    mgf_file.touch()
+    config_file.write_text("model_used: transformer\n")
+
+    instanovo_node = urgap.init_node("Instanovo:1.2.2")
+    instanovo_configs_dir = instanovo_node.find_instanovo_configs()
+    relative_config_path = os.path.relpath(config_dir, instanovo_configs_dir)
+
+    model_used = "transformer"
+    proc = subprocess.Popen(
+        [
+            "instanovo",
+            model_used,
+            "predict",
+            "--data-path",
+            str(mgf_file),
+            "--output-path",
+            str(output_csv),
+            "--config-path",
+            relative_config_path,
+            "--config-name",
+            config_file.stem,
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    try:
+        time.sleep(3)
+        # 127 = command not found; anything else (still running, or failing
+        # later on bad/empty data) confirms the process actually started.
+        assert proc.poll() is None or proc.returncode != 127
+    finally:
+        if proc.poll() is None:
+            proc.terminate()
+            proc.wait(timeout=5)
