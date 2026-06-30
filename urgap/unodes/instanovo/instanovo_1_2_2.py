@@ -12,7 +12,7 @@ import urgap
 
 class Instanovo(urgap.unode.UNodeBase):
     """Urgap wrapper for the Instanovo de-novosearch engine.
- 
+
     Instanovo is a de novo peptide sequencing program that sequences peptides from an mgf file into an csv file.
     This requires a gpu to run, or else the program will not be able to complete and continue going forever. See publication provided under META_INFO[
     "citation"] for further info.
@@ -44,10 +44,10 @@ class Instanovo(urgap.unode.UNodeBase):
 
     def find_instanovo_configs(self) -> Path:
         """Locate the instanovo package's built-in configs directory.
- 
+
         Returns:
             Path: Resolved path to the instanovo/configs directory.
- 
+
         Raises:
             FileNotFoundError: If the instanovo/configs directory could not
                 be located via the package spec or sys.path.
@@ -74,15 +74,15 @@ class Instanovo(urgap.unode.UNodeBase):
         utrace: urgap.UTrace,
     ) -> urgap.UTrace:
         """Preflight routine for Instanovo_1 wrapper.
- 
+
         During preflight,
             - parameters are formatted
             - mods are mapped and formatted
             - param file is written
- 
+
         Args:
             utrace: Combination of urun_dict, ufile_list and unode.meta.
- 
+
         Returns:
             UTrace object, combination of urun_dict, ufile_list and unode.meta.
         """
@@ -136,13 +136,13 @@ class Instanovo(urgap.unode.UNodeBase):
         utrace: urgap.UTrace,
     ) -> urgap.UTrace:
         """Postflight routine for Instanovo_1 wrapper.
- 
+
         During postflight the Instanovo native .csv output file is converted into the
         pre-defined urgap output file, which is of csv format.
- 
+
         Args:
             utrace: Combination of urun_dict, ufile_list and unode.meta.
- 
+
         Returns:
             UTrace object, combination of urun_dict, ufile_list and unode.meta.
         """
