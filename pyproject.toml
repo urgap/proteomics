@@ -10,7 +10,8 @@ requires-python = ">=3.11"
 dependencies = [
     "urgap[all]",
     "pymzml>=2.5.0",
-    "pyiohat>=1.9.0"
+    "pyiohat>=1.9.0",
+    "instanovo>=1.2.2"
 ]
 
 [project.optional-dependencies]
