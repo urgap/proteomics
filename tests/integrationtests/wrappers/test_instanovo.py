@@ -9,7 +9,9 @@ import urgap
 import os
 import subprocess
 import time 
-
+import logging
+import threading
+import psutil
 
 def test_instanovo_node_init() -> None:
     """Test that the Instanovo node can be initialized."""
@@ -88,6 +90,7 @@ def test_instanovo_invalid_model_mode() -> None:
 
 
 @pytest.mark.parametrize("model_used", ["transformer", "diffusion"])
+
 def test_instanovo_urun_dict_model_used(model_used: str) -> None:
     """Test that model_used is correctly stored in URunDict parameters."""
     urun_dict = urgap.URunDict(
@@ -107,64 +110,61 @@ def test_instanovo_urun_dict_model_used(model_used: str) -> None:
     assert params["model_used"] in ["transformer", "diffusion"]
 
 
-def test_instanovo_program_starts() -> None:
-    """Test that the instanovo CLI binary exists and starts executing."""
-    proc = subprocess.Popen(
-        ["instanovo", "--help"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+def test_instanovo_starts(tmp_dir, caplog):
+    urd = urgap.URunDict(
+        {
+            "parameters": {
+                "Instanovo:1.2.2": {
+                    "model_used": "transformer",
+                },
+            },
+            "unode_parameters": {
+                "storage_base_uri": f"file://{tmp_dir}",
+            },
+        },
     )
-    try:
-        time.sleep(2)
-        assert proc.poll() is None or proc.returncode == 0
-    finally:
-        if proc.poll() is None:
-            proc.terminate()
-            proc.wait(timeout=5)
-
-            
-def test_instanovo_predict_process_starts(tmp_path: Path) -> None:
-    """Test that `instanovo predict` actually launches (not completes).
-
-    Builds the config-path the same way Instanovo.preflight() does: relative
-    to instanovo's built-in configs directory, resolved via importlib.
-    """
-    mgf_file = tmp_path / "test.pymzml.mgf"
-    output_csv = tmp_path / "output.instanovo.csv"
-    config_dir = tmp_path / "config"
-    config_dir.mkdir()
-    config_file = config_dir / "default.yaml"
-    mgf_file.touch()
-    config_file.write_text("model_used: transformer\n")
+    ufiles = urgap.UFileList(
+        [
+            urgap.UFile(
+                uri=f"file://"
+                f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.converter.PYMZML_MGF}"
+                f"#mgfs/BSA1.mgf"
+            ),
+            urgap.UFile(
+                uri=f"file://"
+                f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.denovosearch.INSTANOVO_YAML}"
+                f"#instanovo_params/default.yaml"
+            ),
+        ],
+    )
 
     instanovo_node = urgap.init_node("Instanovo:1.2.2")
-    instanovo_configs_dir = instanovo_node.find_instanovo_configs()
-    relative_config_path = os.path.relpath(config_dir, instanovo_configs_dir)
 
-    model_used = "transformer"
-    proc = subprocess.Popen(
-        [
-            "instanovo",
-            model_used,
-            "predict",
-            "--data-path",
-            str(mgf_file),
-            "--output-path",
-            str(output_csv),
-            "--config-path",
-            relative_config_path,
-            "--config-name",
-            config_file.stem,
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+    thread = threading.Thread(
+        target=instanovo_node.run,
+        kwargs={"urun_dict": urd, "ufiles": ufiles},
+        daemon=True,
     )
     try:
-        time.sleep(3)
-        # 127 = command not found; anything else (still running, or failing
-        # later on bad/empty data) confirms the process actually started.
-        assert proc.poll() is None or proc.returncode != 127
+        with caplog.at_level(logging.INFO):
+            thread.start()
+
+            deadline = time.monotonic() + 10
+            launched = False
+            while time.monotonic() < deadline:
+                if "Executing command list: " in caplog.text:
+                    launched = True
+                    break
+                time.sleep(0.2)
+
+        assert "Running execute ..." in caplog.text
+        assert launched, "instanovo command was never launched"
+        assert (
+            "instanovo diffusion predict" in caplog.text
+            or "instanovo transformer predict" in caplog.text
+        )
     finally:
-        if proc.poll() is None:
-            proc.terminate()
-            proc.wait(timeout=5)
+        for proc in psutil.process_iter(["cmdline"]):
+            cmdline = " ".join(proc.info["cmdline"] or [])
+            if "instanovo" in cmdline and "predict" in cmdline:
+                proc.terminate()
