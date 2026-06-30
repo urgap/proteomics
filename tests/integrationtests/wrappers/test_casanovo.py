@@ -6,10 +6,14 @@ import pytest
 
 import urgap
 
+import time 
+import logging
+import threading
+import psutil
 
 def test_casanovo_node_init() -> None:
     """Test that the Casanovo node can be initialized."""
-    casanovo_node = urgap.init_node("Casanovo:5.1.2")
+    casanovo_node = urgap.init_node("Casanovo:5.2.0")
     assert casanovo_node is not None
 
 
@@ -80,7 +84,7 @@ def test_casanovo_urun_dict_sequence() -> None:
     urun_dict = urgap.URunDict(
         {
             "parameters": {
-                "Casanovo:5.1.2": {
+                "Casanovo:5.2.0": {
                     "search_mode": "sequence",
                 },
             },
@@ -89,7 +93,7 @@ def test_casanovo_urun_dict_sequence() -> None:
             },
         },
     )
-    params = urun_dict.parameters["Casanovo:5.1.2"]
+    params = urun_dict.parameters["Casanovo:5.2.0"]
     assert params["search_mode"] == "sequence"
 
 
@@ -98,7 +102,7 @@ def test_casanovo_urun_dict_db_search() -> None:
     urun_dict = urgap.URunDict(
         {
             "parameters": {
-                "Casanovo:5.1.2": {
+                "Casanovo:5.2.0": {
                     "search_mode": "db-search",
                 },
             },
@@ -107,7 +111,7 @@ def test_casanovo_urun_dict_db_search() -> None:
             },
         },
     )
-    params = urun_dict.parameters["Casanovo:5.1.2"]
+    params = urun_dict.parameters["Casanovo:5.2.0"]
     assert params["search_mode"] == "db-search"
 
 
@@ -124,7 +128,7 @@ def test_casanovo_urun_dict_search_mode(search_mode: str) -> None:
     urun_dict = urgap.URunDict(
         {
             "parameters": {
-                "Casanovo:5.1.2": {
+                "Casanovo:5.2.0": {
                     "search_mode": search_mode,
                 },
             },
@@ -133,6 +137,123 @@ def test_casanovo_urun_dict_search_mode(search_mode: str) -> None:
             },
         },
     )
-    params = urun_dict.parameters["Casanovo:5.1.2"]
+    params = urun_dict.parameters["Casanovo:5.2.0"]
     assert params["search_mode"] == search_mode
     assert params["search_mode"] in ["sequence", "db-search"]
+
+
+def test_casanovo_starts(tmp_dir, caplog):
+    urd = urgap.URunDict(
+        {
+            "parameters": {
+                "Casanovo:5.2.0": {
+                    "search_mode": "sequence",
+                },
+            },
+            "unode_parameters": {
+                "storage_base_uri": f"file://{tmp_dir}",
+            },
+        },
+    )
+    ufiles = urgap.UFileList(
+        [
+            urgap.UFile(
+                uri=f"file://"
+                f"{urgap._test_folder}/data?uftype={urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML}"
+                f"#ms_files/BSA1.mzML"
+            ),
+            urgap.UFile(
+                uri=f"file://"
+                f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML}"
+                f"#casanovo_params/casanovo.yaml"
+            ),
+        ],
+    )
+
+    casanovo_node = urgap.init_node("Casanovo:5.2.0")
+
+    thread = threading.Thread(
+        target=casanovo_node.run,
+        kwargs={"urun_dict": urd, "ufiles": ufiles},
+        daemon=True,
+    )
+    try:
+        with caplog.at_level(logging.INFO):
+            thread.start()
+
+            deadline = time.monotonic() + 10
+            launched = False
+            while time.monotonic() < deadline:
+                if "Executing command list: " in caplog.text:
+                    launched = True
+                    break
+                time.sleep(0.2)
+
+        assert "Running execute ..." in caplog.text
+        assert launched, "casanovo command was never launched"
+        assert "casanovo sequence" in caplog.text
+    finally:
+        for proc in psutil.process_iter(["cmdline"]):
+            cmdline = " ".join(proc.info["cmdline"] or [])
+            if "casanovo" in cmdline and "sequence" in cmdline:
+                proc.terminate()
+
+def test_casanovo_db_search_starts(tmp_dir, caplog):
+    urd = urgap.URunDict(
+        {
+            "parameters": {
+                "Casanovo:5.2.0": {
+                    "search_mode": "db-search",
+                },
+            },
+            "unode_parameters": {
+                "storage_base_uri": f"file://{tmp_dir}",
+            },
+        },
+    )
+    ufiles = urgap.UFileList(
+        [
+            urgap.UFile(
+                uri=f"file://"
+                f"{urgap._test_folder}/data?uftype={urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML}"
+                f"#ms_files/BSA1.mzML"
+            ),
+            urgap.UFile(
+                uri=f"file://"
+                f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML}"
+                f"#casanovo_params/casanovo.yaml"
+            ),
+            urgap.UFile(
+                uri=f"file://"
+                f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.FASTA}#fastas/BSA1.fasta"
+            ),
+        ],
+    )
+
+    casanovo_node = urgap.init_node("Casanovo:5.2.0")
+
+    thread = threading.Thread(
+        target=casanovo_node.run,
+        kwargs={"urun_dict": urd, "ufiles": ufiles},
+        daemon=True,
+    )
+    try:
+        with caplog.at_level(logging.INFO):
+            thread.start()
+
+            deadline = time.monotonic() + 10
+            launched = False
+            while time.monotonic() < deadline:
+                if "Executing command list: " in caplog.text:
+                    launched = True
+                    break
+                time.sleep(0.2)
+
+        assert "Running execute ..." in caplog.text
+        assert launched, "casanovo command was never launched"
+        assert "casanovo db-search" in caplog.text
+    finally:
+        for proc in psutil.process_iter(["cmdline"]):
+            cmdline = " ".join(proc.info["cmdline"] or [])
+            if "casanovo" in cmdline and "db-search" in cmdline:
+                proc.terminate()

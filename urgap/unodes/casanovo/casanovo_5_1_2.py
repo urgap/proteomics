@@ -1,12 +1,13 @@
-"""Urgap casanonvo_5_1_2 wrapper."""
+"""Urgap casanonvo_5_2_0 wrapper."""
 
 import logging
 
 import urgap
 
 
+
 class Casanovo(urgap.unode.UNodeBase):
-    """Urgap wrapper for the casanovo_5_0_0 search engine.
+    """Urgap wrapper for the casanovo_5_2_0 search engine.
 
     Casanovo is a de novo peptide sequencing program that sequences peptides from an  mzML, mzXML, or mgf file into an mztab file.
     This requires a gpu to run, or else the program will not be able to complete and continue going forever. See publication provided under META_INFO[
@@ -18,7 +19,7 @@ class Casanovo(urgap.unode.UNodeBase):
         "wrapper_version": {"major": 1, "minor": 0, "patch": 0},
         "versions": [
             {
-                "version": "5.1.2",
+                "version": "5.2.0",
                 "exe_path": "$casanovo",
             },
         ],
@@ -38,14 +39,14 @@ class Casanovo(urgap.unode.UNodeBase):
     }
 
     def __init__(self, *args: object, **kwargs: object) -> None:
-        """Initialize casanovo_5_0_0 class."""
+        """Initialize casanovo_5_2_0 class."""
         super().__init__(*args, **kwargs)
 
     def preflight(
         self,
         utrace: urgap.UTrace,
     ) -> urgap.UTrace:
-        """Preflight routine for casanovo_5_0_0 wrapper.
+        """Preflight routine for casanovo_5_2_0 wrapper.
 
         During preflight,
             - parameters are formatted
