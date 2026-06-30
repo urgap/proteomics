@@ -17,6 +17,7 @@ dev = [
     "pytest",
     "pytest-asyncio>=0.23",
     "urgap[dev]",
+    "simepy",
 ]
 
 proteomics = [
