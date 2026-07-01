@@ -15,7 +15,7 @@ class GenerateTargetDecoyFasta(urgap.unode.UNodeBase):
         "versions": [
             {
                 "version": "2.0.0",
-                "exe_path": "generate_target_decoy_fasta_2_0_0/generate_target_decoy_fasta_2_0_0.py",
+                "exe_path": "generate_target_decoy_fasta_2_0_0/2_0_0/generate_target_decoy_fasta_2_0_0.py",
             },
         ],
         "parameters_not_triggering_rerun": [],
