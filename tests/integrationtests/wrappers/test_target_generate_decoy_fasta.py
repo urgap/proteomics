@@ -90,6 +90,6 @@ def test_wrapper_generate_target_decoy_fasta_2_0_params(tmp_dir: Path) -> None:
 
     # shuffle_peptide test:
     assert len(immutable_lines) == 0
-    # shuffle_peptide-specific: row 11 should NOT match the reverse_protein
+    # shuffle_peptide-specific: row 11 should NOT match the target protein
     # output for the same peptide, confirming --mode actually changed behavior
     assert not lines[10].startswith("MKWVTFISLLLLFSSAYS")
