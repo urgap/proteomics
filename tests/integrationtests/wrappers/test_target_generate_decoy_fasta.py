@@ -11,7 +11,7 @@ def test_wrapper_generate_target_decoy_fasta_2_0_simple(tmp_dir: Path) -> None:
         [
             urgap.UFile(
                 uri=f"file://{urgap._test_folder}/data?uftype="
-                f"{urgap.uftypes.proteomics.FASTA}#fastas/Hfvol_prot_230328_bridgeCDS_cRAP_target-decoy_trypsin.fasta",
+                f"{urgap.uftypes.proteomics.FASTA}#fastas/BSA1.fasta",
             ),
         ],
     )
@@ -39,13 +39,13 @@ def test_wrapper_generate_target_decoy_fasta_2_0_simple(tmp_dir: Path) -> None:
     assert output_files[0].path.exists() is True
     with output_files[0].path.open() as test_file:
         lines = list(test_file)
-        assert len(lines) == 85552
+        assert len(lines) == 18
     with output_files[1].path.open() as immutable_file:
         immutable_lines = list(immutable_file)
 
     # reverse_protein-specific: row 11 is the first line of the first decoy
     # peptide, which should be the target's tail peptide reversed
-    assert lines[10].startswith("NDFRAQVF")
+    assert lines[10].startswith("LATQTSVVLKPGEVAF")
 
     assert len(immutable_lines) == 0
 
@@ -56,7 +56,7 @@ def test_wrapper_generate_target_decoy_fasta_2_0_params(tmp_dir: Path) -> None:
         [
             urgap.UFile(
                 uri=f"file://{urgap._test_folder}/data?uftype="
-                f"{urgap.uftypes.proteomics.FASTA}#fastas/Hfvol_prot_230328_bridgeCDS_cRAP_target-decoy_trypsin.fasta",
+                f"{urgap.uftypes.proteomics.FASTA}#fastas/BSA1.fasta",
             ),
         ],
     )
@@ -84,7 +84,7 @@ def test_wrapper_generate_target_decoy_fasta_2_0_params(tmp_dir: Path) -> None:
     assert output_files[0].path.exists() is True
     with output_files[0].path.open() as test_file:
         lines = list(test_file)
-        assert len(lines) == 85552
+        assert len(lines) == 18
     with output_files[1].path.open() as immutable_file:
         immutable_lines = list(immutable_file)
 
@@ -92,4 +92,4 @@ def test_wrapper_generate_target_decoy_fasta_2_0_params(tmp_dir: Path) -> None:
     assert len(immutable_lines) == 0
     # shuffle_peptide-specific: row 11 should NOT match the reverse_protein
     # output for the same peptide, confirming --mode actually changed behavior
-    assert not lines[10].startswith("NDFRAQVF")
+    assert not lines[10].startswith("MKWVTFISLLLLFSSAYS")
