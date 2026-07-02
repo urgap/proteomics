@@ -27,6 +27,8 @@ proteomics.diannlibrary.DIANN_EMPIRICIAL_LIBRARY = ".diann_emperical.speclib"
 
 proteomics.denovosearch = types.SimpleNamespace()
 proteomics.denovosearch.NOVOR_CSV = ".novor.csv"
+proteomics.denovosearch.CASANOVO_YAML = ".casanovo.yaml"
+proteomics.denovosearch.CASANOVO_MZTAB = ".casanovo.mztab"
 
 proteomics.converter = types.SimpleNamespace()
 proteomics.converter.ANY = "proteomics.converter.ANY"
