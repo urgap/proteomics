@@ -5,7 +5,6 @@ import logging
 import urgap
 
 
-
 class Casanovo(urgap.unode.UNodeBase):
     """Urgap wrapper for the casanovo_5_2_0 search engine.
 
@@ -27,7 +26,7 @@ class Casanovo(urgap.unode.UNodeBase):
         "engine": None,
         "input_uftypes": {
             urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML: {"min": 1, "max": 1},
-            urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML: {"min": 1, "max": 1},
+            urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML: {"min": 0, "max": 1},
             urgap.uftypes.proteomics.FASTA: {"min": 0, "max": 1},
         },
 
@@ -58,6 +57,11 @@ class Casanovo(urgap.unode.UNodeBase):
 
         Returns:
             UTrace object, combination of urun_dict, ufile_list and unode.meta.
+
+        Raises:
+            ValueError: If no mzML file is provided, the search mode is
+                unrecognized, a db-search is requested without a FASTA, or
+                a FASTA is provided while in sequence (de novo) mode.
         """
         input_params = utrace.urun_dict.parameters[
             f"{self.META_INFO['unode_full_identifier']}"
@@ -66,15 +70,15 @@ class Casanovo(urgap.unode.UNodeBase):
             urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML,
         )
         if len(mzml_file) == 0:
-            logging.error(
-                "Provide an mzML file as input for casanovo. No mzML file has been provided",
-            )
-        elif len(mzml_file) == 1:
-            spec_file = mzml_file[0]
+            msg = "Provide an mzML file as input for casanovo. No mzML file has been provided"
+            logging.error(msg)
+            raise ValueError(msg)
+        spec_file = mzml_file[0]
 
-        param_file = utrace.input_files.get_path_objects_by_uftype(
+        param_file_list = utrace.input_files.get_path_objects_by_uftype(
             urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML,
-        )[0]
+        )
+        param_file = param_file_list[0] if len(param_file_list) != 0 else None
 
         output_mztab = utrace.output_files.get_path_objects_by_uftype(
             urgap.uftypes.proteomics.denovosearch.CASANOVO_MZTAB,
@@ -83,44 +87,48 @@ class Casanovo(urgap.unode.UNodeBase):
         # the mode in which casanovo is in run
         search_mode = input_params["search_mode"]
         if search_mode not in ["sequence", "db-search"]:
-            logging.error(
-                "Unknown search mode %s. Search mode has to be either 'sequence' or 'db-search'",
-                search_mode,
+            msg = (
+                f"Unknown search mode {search_mode}. Search mode has to be "
+                "either 'sequence' or 'db-search'"
             )
+            logging.error(msg)
+            raise ValueError(msg)
+
         utrace.urun_dict.command_list = [
             "casanovo",
              f"{search_mode}",
             str(spec_file),
-            "--config",
-            param_file,
             "--output_dir",
             output_mztab.parent,
             "--output_root",
             output_mztab.name.replace(".mztab", ""),
         ]
 
+        if param_file is not None:
+            utrace.urun_dict.command_list.insert(3, "--config")
+            utrace.urun_dict.command_list.insert(4, param_file)
+
         if search_mode == "db-search":
-            fasta_file = utrace.input_files.get_path_objects_by_uftype(
-                urgap.uftypes.proteomics.FASTA,
-            )[0]
-            utrace.urun_dict.command_list.insert(3, fasta_file)
-            # check if this is behaving the way you'd like it to
             fasta_file_list = utrace.input_files.get_path_objects_by_uftype(
                 urgap.uftypes.proteomics.FASTA,
             )
             if len(fasta_file_list) == 0:
-                logging.error("Please input a Fasta file for database searching.")
+                msg = "Please input a Fasta file for database searching."
+                logging.error(msg)
+                raise ValueError(msg)
             fasta_file = fasta_file_list[0]
             utrace.urun_dict.command_list.insert(3, fasta_file)
         elif search_mode == "sequence":
-            # check ig this is the correct way of assessing the fasta files or the one above
             fasta_file_list = utrace.input_files.get_path_objects_by_uftype(
                 urgap.uftypes.proteomics.FASTA,
             )
             if len(fasta_file_list) != 0:
-                logging.error(
-                    "A fasta file has been provided despite the search mode being set to sequence, i.e. de novo.",
+                msg = (
+                    "A fasta file has been provided despite the search mode "
+                    "being set to sequence, i.e. de novo."
                 )
+                logging.error(msg)
+                raise ValueError(msg)
 
         return utrace
 

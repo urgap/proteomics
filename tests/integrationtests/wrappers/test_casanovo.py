@@ -1,86 +1,17 @@
 """Integration test for Casanovo."""
 
+import logging
+
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
 import urgap
 
-import time 
-import logging
-import threading
-import psutil
 
-def test_casanovo_node_init() -> None:
-    """Test that the Casanovo node can be initialized."""
-    casanovo_node = urgap.init_node("Casanovo:5.2.0")
-    assert casanovo_node is not None
-
-
-def test_casanovo_ufile_construction_sequence(tmp_path: Path) -> None:
-    """Test that UFiles can be constructed for sequence (de novo) mode."""
-    mzml_file = tmp_path / "test.mzML"
-    yaml_file = tmp_path / "default.yaml"
-    mzml_file.touch()
-    yaml_file.touch()
-
-    ufiles = urgap.UFileList(
-        [
-            urgap.UFile(
-                uri=f"file://{mzml_file.parent}?uftype={urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML}"
-                f"#{mzml_file.name}",
-            ),
-            urgap.UFile(
-                uri=f"file://{yaml_file.parent}?uftype={urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML}"
-                f"#{yaml_file.name}",
-            ),
-        ],
-    )
-
-    assert len(ufiles) == 2
-    mzml_ufiles = ufiles.get_path_objects_by_uftype(urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML)
-    yaml_ufiles = ufiles.get_path_objects_by_uftype(urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML)
-    assert len(mzml_ufiles) == 1
-    assert len(yaml_ufiles) == 1
-
-
-def test_casanovo_ufile_construction_db_search(tmp_path: Path) -> None:
-    """Test that UFiles can be constructed for db-search mode, including a FASTA."""
-    mzml_file = tmp_path / "test.mzML"
-    yaml_file = tmp_path / "default.yaml"
-    fasta_file = tmp_path / "test.fasta"
-    mzml_file.touch()
-    yaml_file.touch()
-    fasta_file.touch()
-
-    ufiles = urgap.UFileList(
-        [
-            urgap.UFile(
-                uri=f"file://{mzml_file.parent}?uftype={urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML}"
-                f"#{mzml_file.name}",
-            ),
-            urgap.UFile(
-                uri=f"file://{yaml_file.parent}?uftype={urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML}"
-                f"#{yaml_file.name}",
-            ),
-            urgap.UFile(
-                uri=f"file://{fasta_file.parent}?uftype={urgap.uftypes.proteomics.FASTA}"
-                f"#{fasta_file.name}",
-            ),
-        ],
-    )
-
-    assert len(ufiles) == 3
-    mzml_ufiles = ufiles.get_path_objects_by_uftype(urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML)
-    yaml_ufiles = ufiles.get_path_objects_by_uftype(urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML)
-    fasta_ufiles = ufiles.get_path_objects_by_uftype(urgap.uftypes.proteomics.FASTA)
-    assert len(mzml_ufiles) == 1
-    assert len(yaml_ufiles) == 1
-    assert len(fasta_ufiles) == 1
-
-
-def test_casanovo_urun_dict_sequence() -> None:
-    """Test that a URunDict with sequence mode can be constructed."""
+def test_casanovo_command_construction_sequence(tmp_path: Path) -> None:
+    """Test that the command_list is built correctly for sequence (de novo) mode."""
     urun_dict = urgap.URunDict(
         {
             "parameters": {
@@ -89,16 +20,106 @@ def test_casanovo_urun_dict_sequence() -> None:
                 },
             },
             "unode_parameters": {
-                "storage_base_uri": "file:///tmp",
+                "storage_base_uri": f"file://{tmp_path}",
             },
         },
     )
-    params = urun_dict.parameters["Casanovo:5.2.0"]
-    assert params["search_mode"] == "sequence"
+
+    ufiles = urgap.UFileList(
+        [
+            urgap.UFile(
+                uri=f"file://{urgap._test_folder}/data?uftype="
+                f"{urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML}#ms_files/BSA1.mzML",
+            ),
+            urgap.UFile(
+                uri=f"file://{urgap._test_folder}/data?uftype="
+                f"{urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML}#casanovo_yaml/casanovo.yaml",
+            ),
+        ],
+    )
+
+    casanovo_node = urgap.init_node("Casanovo:5.2.0")
+
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value.returncode = 0
+        mock_run.return_value.stdout = ""
+        with pytest.raises(FileNotFoundError):
+            casanovo_node.run(ufiles, urun_dict)
+
+    actual_cmd = [str(c) for c in mock_run.call_args[0][0]]
+
+    assert actual_cmd[0] == "casanovo"
+    assert actual_cmd[1] == "sequence"
+    assert actual_cmd[2].endswith("BSA1.mzML")
+    assert actual_cmd[3] == "--config"
+    assert actual_cmd[4].endswith("casanovo.yaml")
+    assert actual_cmd[5] == "--output_dir"
+    assert actual_cmd[7] == "--output_root"
+    assert len(actual_cmd) == 9
 
 
-def test_casanovo_urun_dict_db_search() -> None:
-    """Test that a URunDict with db-search mode can be constructed."""
+def test_casanovo_command_construction_sequence_no_param_file(tmp_path: Path) -> None:
+    """Test that the command_list omits --config when no param file is provided."""
+    urun_dict = urgap.URunDict(
+        {
+            "parameters": {
+                "Casanovo:5.2.0": {
+                    "search_mode": "sequence",
+                },
+            },
+            "unode_parameters": {
+                "storage_base_uri": f"file://{tmp_path}",
+            },
+        },
+    )
+
+    ufiles = urgap.UFileList(
+        [
+            urgap.UFile(
+                uri=f"file://{urgap._test_folder}/data?uftype="
+                f"{urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML}#ms_files/BSA1.mzML",
+            ),
+        ],
+    )
+
+    casanovo_node = urgap.init_node("Casanovo:5.2.0")
+
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value.returncode = 0
+        mock_run.return_value.stdout = ""
+        with pytest.raises(FileNotFoundError):
+            casanovo_node.run(ufiles, urun_dict)
+
+    actual_cmd = [str(c) for c in mock_run.call_args[0][0]]
+
+    assert actual_cmd[0] == "casanovo"
+    assert actual_cmd[1] == "sequence"
+    assert actual_cmd[2].endswith("BSA1.mzML")
+    assert "--config" not in actual_cmd
+    assert actual_cmd[3] == "--output_dir"
+    assert actual_cmd[5] == "--output_root"
+    assert len(actual_cmd) == 7
+
+
+def test_casanovo_command_construction_db_search(tmp_path: Path) -> None:
+    """Test that the command_list is built correctly for db-search mode, including a FASTA."""
+    ufiles = urgap.UFileList(
+        [
+            urgap.UFile(
+                uri=f"file://{urgap._test_folder}/data?uftype="
+                f"{urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML}#ms_files/BSA1.mzML",
+            ),
+            urgap.UFile(
+                uri=f"file://{urgap._test_folder}/data?uftype="
+                f"{urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML}#casanovo_yaml/casanovo.yaml",
+            ),
+            urgap.UFile(
+                uri=f"file://{urgap._test_folder}/data?uftype="
+                f"{urgap.uftypes.proteomics.FASTA}#fastas/BSA1.fasta",
+            ),
+        ],
+    )
+
     urun_dict = urgap.URunDict(
         {
             "parameters": {
@@ -107,42 +128,35 @@ def test_casanovo_urun_dict_db_search() -> None:
                 },
             },
             "unode_parameters": {
-                "storage_base_uri": "file:///tmp",
+                "storage_base_uri": f"file://{tmp_path}",
             },
         },
     )
-    params = urun_dict.parameters["Casanovo:5.2.0"]
-    assert params["search_mode"] == "db-search"
+
+    casanovo_node = urgap.init_node("Casanovo:5.2.0")
+
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value.returncode = 0
+        mock_run.return_value.stdout = ""
+        with pytest.raises(FileNotFoundError):
+            casanovo_node.run(ufiles, urun_dict)
+
+    actual_cmd = [str(c) for c in mock_run.call_args[0][0]]
+
+    assert actual_cmd[0] == "casanovo"
+    assert actual_cmd[1] == "db-search"
+    assert actual_cmd[2].endswith("BSA1.mzML")
+    assert actual_cmd[3].endswith("BSA1.fasta")
+    assert actual_cmd[4] == "--config"
+    assert actual_cmd[5].endswith("casanovo.yaml")
+    assert actual_cmd[6] == "--output_dir"
+    assert actual_cmd[8] == "--output_root"
+    assert len(actual_cmd) == 10
 
 
-def test_casanovo_invalid_search_mode() -> None:
-    """Test that an invalid search_mode value is not one of the accepted modes."""
-    invalid_mode = "invalid_mode"
-    valid_modes = ["sequence", "db-search"]
-    assert invalid_mode not in valid_modes
 
-
-@pytest.mark.parametrize("search_mode", ["sequence", "db-search"])
-def test_casanovo_urun_dict_search_mode(search_mode: str) -> None:
-    """Test that search_mode is correctly stored in URunDict parameters."""
-    urun_dict = urgap.URunDict(
-        {
-            "parameters": {
-                "Casanovo:5.2.0": {
-                    "search_mode": search_mode,
-                },
-            },
-            "unode_parameters": {
-                "storage_base_uri": "file:///tmp",
-            },
-        },
-    )
-    params = urun_dict.parameters["Casanovo:5.2.0"]
-    assert params["search_mode"] == search_mode
-    assert params["search_mode"] in ["sequence", "db-search"]
-
-
-def test_casanovo_starts(tmp_dir, caplog):
+def test_casanovo_sequence_mode_with_fasta_logs_error(tmp_dir, caplog):
+    """Providing a FASTA in sequence (de novo) mode should log an error and raise."""
     urd = urgap.URunDict(
         {
             "parameters": {
@@ -155,50 +169,32 @@ def test_casanovo_starts(tmp_dir, caplog):
             },
         },
     )
-    ufiles = urgap.UFileList(
-        [
-            urgap.UFile(
-                uri=f"file://"
-                f"{urgap._test_folder}/data?uftype={urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML}"
-                f"#ms_files/BSA1.mzML"
-            ),
-            urgap.UFile(
-                uri=f"file://"
-                f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML}"
-                f"#casanovo_params/casanovo.yaml"
-            ),
-        ],
+    ufiles = (
+        urgap.UFile(
+            uri=f"file://{urgap._test_folder}/data?uftype="
+            f"{urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML}#ms_files/BSA1.mzML",
+        ),
+        urgap.UFile(
+            uri=f"file://{urgap._test_folder}/data?uftype="
+            f"{urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML}#casanovo_yaml/casanovo.yaml",
+        ),
+        urgap.UFile(
+            uri=f"file://{urgap._test_folder}/data?uftype="
+            f"{urgap.uftypes.proteomics.FASTA}#fastas/BSA1.fasta",
+        ),
     )
 
     casanovo_node = urgap.init_node("Casanovo:5.2.0")
+    with caplog.at_level(logging.ERROR), pytest.raises(ValueError):
+        casanovo_node.run(ufiles, urd)
 
-    thread = threading.Thread(
-        target=casanovo_node.run,
-        kwargs={"urun_dict": urd, "ufiles": ufiles},
-        daemon=True,
+    assert (
+        "A fasta file has been provided despite the search mode being set to sequence"
+        in caplog.text
     )
-    try:
-        with caplog.at_level(logging.INFO):
-            thread.start()
 
-            deadline = time.monotonic() + 10
-            launched = False
-            while time.monotonic() < deadline:
-                if "Executing command list: " in caplog.text:
-                    launched = True
-                    break
-                time.sleep(0.2)
-
-        assert "Running execute ..." in caplog.text
-        assert launched, "casanovo command was never launched"
-        assert "casanovo sequence" in caplog.text
-    finally:
-        for proc in psutil.process_iter(["cmdline"]):
-            cmdline = " ".join(proc.info["cmdline"] or [])
-            if "casanovo" in cmdline and "sequence" in cmdline:
-                proc.terminate()
-
-def test_casanovo_db_search_starts(tmp_dir, caplog):
+def test_casanovo_db_search_missing_fasta_raises(tmp_dir, caplog):
+    """db-search with no FASTA should both log an error and raise ValueError."""
     urd = urgap.URunDict(
         {
             "parameters": {
@@ -211,49 +207,19 @@ def test_casanovo_db_search_starts(tmp_dir, caplog):
             },
         },
     )
-    ufiles = urgap.UFileList(
-        [
-            urgap.UFile(
-                uri=f"file://"
-                f"{urgap._test_folder}/data?uftype={urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML}"
-                f"#ms_files/BSA1.mzML"
-            ),
-            urgap.UFile(
-                uri=f"file://"
-                f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML}"
-                f"#casanovo_params/casanovo.yaml"
-            ),
-            urgap.UFile(
-                uri=f"file://"
-                f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.FASTA}#fastas/BSA1.fasta"
-            ),
-        ],
+    ufiles = (
+        urgap.UFile(
+            uri=f"file://{urgap._test_folder}/data?uftype="
+            f"{urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML}#ms_files/BSA1.mzML",
+        ),
+        urgap.UFile(
+            uri=f"file://{urgap._test_folder}/data?uftype="
+            f"{urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML}#casanovo_yaml/casanovo.yaml",
+        ),
     )
 
     casanovo_node = urgap.init_node("Casanovo:5.2.0")
+    with caplog.at_level(logging.ERROR), pytest.raises(ValueError):
+        casanovo_node.run(ufiles, urd)
 
-    thread = threading.Thread(
-        target=casanovo_node.run,
-        kwargs={"urun_dict": urd, "ufiles": ufiles},
-        daemon=True,
-    )
-    try:
-        with caplog.at_level(logging.INFO):
-            thread.start()
-
-            deadline = time.monotonic() + 10
-            launched = False
-            while time.monotonic() < deadline:
-                if "Executing command list: " in caplog.text:
-                    launched = True
-                    break
-                time.sleep(0.2)
-
-        assert "Running execute ..." in caplog.text
-        assert launched, "casanovo command was never launched"
-        assert "casanovo db-search" in caplog.text
-    finally:
-        for proc in psutil.process_iter(["cmdline"]):
-            cmdline = " ".join(proc.info["cmdline"] or [])
-            if "casanovo" in cmdline and "db-search" in cmdline:
-                proc.terminate()
+    assert "Please input a Fasta file for database searching." in caplog.text
