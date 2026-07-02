@@ -48,7 +48,7 @@ def test_casanovo_command_construction_sequence(tmp_path: Path) -> None:
 
     actual_cmd = [str(c) for c in mock_run.call_args[0][0]]
 
-    assert actual_cmd[0] == "casanovo"
+    assert actual_cmd[0].endswith("casanovo")
     assert actual_cmd[1] == "sequence"
     assert actual_cmd[2].endswith("BSA1.mzML")
     assert actual_cmd[3] == "--config"
@@ -57,48 +57,6 @@ def test_casanovo_command_construction_sequence(tmp_path: Path) -> None:
     assert actual_cmd[7] == "--output_root"
     assert len(actual_cmd) == 9
 
-
-def test_casanovo_command_construction_sequence_no_param_file(tmp_path: Path) -> None:
-    """Test that the command_list omits --config when no param file is provided."""
-    urun_dict = urgap.URunDict(
-        {
-            "parameters": {
-                "Casanovo:5.2.0": {
-                    "search_mode": "sequence",
-                },
-            },
-            "unode_parameters": {
-                "storage_base_uri": f"file://{tmp_path}",
-            },
-        },
-    )
-
-    ufiles = urgap.UFileList(
-        [
-            urgap.UFile(
-                uri=f"file://{urgap._test_folder}/data?uftype="
-                f"{urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML}#ms_files/BSA1.mzML",
-            ),
-        ],
-    )
-
-    casanovo_node = urgap.init_node("Casanovo:5.2.0")
-
-    with patch("subprocess.run") as mock_run:
-        mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = ""
-        with pytest.raises(FileNotFoundError):
-            casanovo_node.run(ufiles, urun_dict)
-
-    actual_cmd = [str(c) for c in mock_run.call_args[0][0]]
-
-    assert actual_cmd[0] == "casanovo"
-    assert actual_cmd[1] == "sequence"
-    assert actual_cmd[2].endswith("BSA1.mzML")
-    assert "--config" not in actual_cmd
-    assert actual_cmd[3] == "--output_dir"
-    assert actual_cmd[5] == "--output_root"
-    assert len(actual_cmd) == 7
 
 
 def test_casanovo_command_construction_db_search(tmp_path: Path) -> None:
@@ -143,7 +101,7 @@ def test_casanovo_command_construction_db_search(tmp_path: Path) -> None:
 
     actual_cmd = [str(c) for c in mock_run.call_args[0][0]]
 
-    assert actual_cmd[0] == "casanovo"
+    assert actual_cmd[0].endswith("casanovo")
     assert actual_cmd[1] == "db-search"
     assert actual_cmd[2].endswith("BSA1.mzML")
     assert actual_cmd[3].endswith("BSA1.fasta")

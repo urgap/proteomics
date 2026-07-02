@@ -26,7 +26,7 @@ class Casanovo(urgap.unode.UNodeBase):
         "engine": None,
         "input_uftypes": {
             urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML: {"min": 1, "max": 1},
-            urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML: {"min": 0, "max": 1},
+            urgap.uftypes.proteomics.denovosearch.CASANOVO_YAML: {"min": 1, "max": 1},
             urgap.uftypes.proteomics.FASTA: {"min": 0, "max": 1},
         },
 
@@ -95,18 +95,17 @@ class Casanovo(urgap.unode.UNodeBase):
             raise ValueError(msg)
 
         utrace.urun_dict.command_list = [
-            "casanovo",
-             f"{search_mode}",
+            str(self.exe_path),
+            f"{search_mode}",
             str(spec_file),
+            "--config",
+            param_file,
             "--output_dir",
             output_mztab.parent,
             "--output_root",
             output_mztab.name.replace(".mztab", ""),
         ]
 
-        if param_file is not None:
-            utrace.urun_dict.command_list.insert(3, "--config")
-            utrace.urun_dict.command_list.insert(4, param_file)
 
         if search_mode == "db-search":
             fasta_file_list = utrace.input_files.get_path_objects_by_uftype(
