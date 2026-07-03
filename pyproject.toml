@@ -8,6 +8,9 @@ version = "0.0.1"
 description = "Urgap proteomics specific extension"
 requires-python = ">=3.11"
 dependencies = [
+    "urgap[cloud]",
+    "urgap[databases]",
+    "urgap[docs]",
     "urgap[dev]",
     "simepy",
     "numpy>=2.0",
