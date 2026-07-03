@@ -10,6 +10,7 @@ requires-python = ">=3.11"
 dependencies = [
     "urgap[docs]",
     "simepy",
+    "numpy>=2.0",
     "pymzml>=2.5.0",
     "pyiohat>=1.9.0"
 ]
