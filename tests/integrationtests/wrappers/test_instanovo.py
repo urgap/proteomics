@@ -12,159 +12,173 @@ import time
 import logging
 import threading
 import psutil
-
-def test_instanovo_node_init() -> None:
-    """Test that the Instanovo node can be initialized."""
-    instanovo_node = urgap.init_node("Instanovo:1.2.2")
-    assert instanovo_node is not None
+from unittest.mock import patch
 
 
-def test_instanovo_ufile_construction(tmp_path: Path) -> None:
-    """Test that UFiles can be constructed with correct uftypes."""
-    mgf_file = tmp_path / "test.pymzml.mgf"
-    yaml_file = tmp_path / "default.yaml"
-    mgf_file.touch()
-    yaml_file.touch()
+def test_instanovo_command_construction_yaml_no_model(tmp_path: Path) -> None:
+    """Test that command_list is built correctly with no model_used, using a yaml config file."""
+    urun_dict = urgap.URunDict(
+        {
+            "parameters": {
+                "Instanovo:1.2.2": {},
+            },
+            "unode_parameters": {
+                "storage_base_uri": f"file://{tmp_path}",
+            },
+        },
+    )
 
     ufiles = urgap.UFileList(
         [
             urgap.UFile(
-                uri=f"file://{mgf_file.parent}?uftype={urgap.uftypes.proteomics.converter.PYMZML_MGF}"
-                f"#{mgf_file.name}",
+                uri=f"file://{urgap._test_folder}/data?uftype="
+                f"{urgap.uftypes.proteomics.converter.PYMZML_MGF}#mgfs/BSA1.mgf",
             ),
             urgap.UFile(
-                uri=f"file://{yaml_file.parent}?uftype={urgap.uftypes.proteomics.denovosearch.INSTANOVO_YAML}"
-                f"#{yaml_file.name}",
-            ),
-        ],
-    )
-
-    assert len(ufiles) == 2
-    mgf_ufiles = ufiles.get_path_objects_by_uftype(urgap.uftypes.proteomics.converter.PYMZML_MGF)
-    yaml_ufiles = ufiles.get_path_objects_by_uftype(urgap.uftypes.proteomics.denovosearch.INSTANOVO_YAML)
-    assert len(mgf_ufiles) == 1
-    assert len(yaml_ufiles) == 1
-
-
-def test_instanovo_urun_dict_transformer() -> None:
-    """Test that a URunDict with transformer mode can be constructed."""
-    urun_dict = urgap.URunDict(
-        {
-            "parameters": {
-                "Instanovo:1.2.2": {
-                    "model_used": "transformer",
-                },
-            },
-            "unode_parameters": {
-                "storage_base_uri": "file:///tmp",
-            },
-        },
-    )
-    params = urun_dict.parameters["Instanovo:1.2.2"]
-    assert params["model_used"] == "transformer"
-
-
-def test_instanovo_urun_dict_diffusion() -> None:
-    """Test that a URunDict with diffusion mode can be constructed."""
-    urun_dict = urgap.URunDict(
-        {
-            "parameters": {
-                "Instanovo:1.2.2": {
-                    "model_used": "diffusion",
-                },
-            },
-            "unode_parameters": {
-                "storage_base_uri": "file:///tmp",
-            },
-        },
-    )
-    params = urun_dict.parameters["Instanovo:1.2.2"]
-    assert params["model_used"] == "diffusion"
-
-
-def test_instanovo_invalid_model_mode() -> None:
-    """Test that an invalid model_used value is not one of the accepted modes."""
-    invalid_mode = "invalid_mode"
-    valid_modes = ["transformer", "diffusion"]
-    assert invalid_mode not in valid_modes
-
-
-@pytest.mark.parametrize("model_used", ["transformer", "diffusion"])
-
-def test_instanovo_urun_dict_model_used(model_used: str) -> None:
-    """Test that model_used is correctly stored in URunDict parameters."""
-    urun_dict = urgap.URunDict(
-        {
-            "parameters": {
-                "Instanovo:1.2.2": {
-                    "model_used": model_used,
-                },
-            },
-            "unode_parameters": {
-                "storage_base_uri": "file:///tmp",
-            },
-        },
-    )
-    params = urun_dict.parameters["Instanovo:1.2.2"]
-    assert params["model_used"] == model_used
-    assert params["model_used"] in ["transformer", "diffusion"]
-
-
-def test_instanovo_starts(tmp_dir, caplog):
-    urd = urgap.URunDict(
-        {
-            "parameters": {
-                "Instanovo:1.2.2": {
-                    "model_used": "transformer",
-                },
-            },
-            "unode_parameters": {
-                "storage_base_uri": f"file://{tmp_dir}",
-            },
-        },
-    )
-    ufiles = urgap.UFileList(
-        [
-            urgap.UFile(
-                uri=f"file://"
-                f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.converter.PYMZML_MGF}"
-                f"#mgfs/BSA1.mgf"
-            ),
-            urgap.UFile(
-                uri=f"file://"
-                f"{urgap._test_folder}/data?uftype={urgap.uftypes.proteomics.denovosearch.INSTANOVO_YAML}"
-                f"#instanovo_params/default.yaml"
+                uri=f"file://{urgap._test_folder}/data?uftype="
+                f"{urgap.uftypes.proteomics.denovosearch.INSTANOVO_YAML}#instanovo_params/default.yaml",
             ),
         ],
     )
 
     instanovo_node = urgap.init_node("Instanovo:1.2.2")
 
-    thread = threading.Thread(
-        target=instanovo_node.run,
-        kwargs={"urun_dict": urd, "ufiles": ufiles},
-        daemon=True,
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value.returncode = 0
+        mock_run.return_value.stdout = ""
+        with pytest.raises(FileNotFoundError):
+            instanovo_node.run(ufiles, urun_dict)
+
+    actual_cmd = [str(c) for c in mock_run.call_args[0][0]]
+
+    assert actual_cmd[0].endswith("instanovo")
+    assert actual_cmd[1] == "predict"
+    assert actual_cmd[2] == "--data-path"
+    assert actual_cmd[3].endswith("BSA1.mgf")
+    assert actual_cmd[4] == "--output-path"
+    assert actual_cmd[6] == "--config-path"
+    assert actual_cmd[8] == "--config-name"
+    assert actual_cmd[9] == "default"
+    assert len(actual_cmd) == 10
+
+
+def test_instanovo_command_construction_with_model_and_cli_params(tmp_path: Path) -> None:
+    """Test that command_list includes model_used and CLI overrides when no yaml file is provided."""
+    urun_dict = urgap.URunDict(
+        {
+            "parameters": {
+                "Instanovo:1.2.2": {
+                    "model_used": "transformer",
+                    "num_beams": 5,
+                },
+            },
+            "unode_parameters": {
+                "storage_base_uri": f"file://{tmp_path}",
+            },
+        },
     )
-    try:
-        with caplog.at_level(logging.INFO):
-            thread.start()
 
-            deadline = time.monotonic() + 10
-            launched = False
-            while time.monotonic() < deadline:
-                if "Executing command list: " in caplog.text:
-                    launched = True
-                    break
-                time.sleep(0.2)
+    ufiles = urgap.UFileList(
+        [
+            urgap.UFile(
+                uri=f"file://{urgap._test_folder}/data?uftype="
+                f"{urgap.uftypes.proteomics.converter.PYMZML_MGF}#mgfs/BSA1.mgf",
+            ),
+        ],
+    )
 
-        assert "Running execute ..." in caplog.text
-        assert launched, "instanovo command was never launched"
-        assert (
-            "instanovo diffusion predict" in caplog.text
-            or "instanovo transformer predict" in caplog.text
-        )
-    finally:
-        for proc in psutil.process_iter(["cmdline"]):
-            cmdline = " ".join(proc.info["cmdline"] or [])
-            if "instanovo" in cmdline and "predict" in cmdline:
-                proc.terminate()
+    instanovo_node = urgap.init_node("Instanovo:1.2.2")
+
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value.returncode = 0
+        mock_run.return_value.stdout = ""
+        with pytest.raises(FileNotFoundError):
+            instanovo_node.run(ufiles, urun_dict)
+
+    actual_cmd = [str(c) for c in mock_run.call_args[0][0]]
+
+    assert actual_cmd[0].endswith("instanovo")
+    assert actual_cmd[1] == "transformer"
+    assert actual_cmd[2] == "predict"
+    assert actual_cmd[3] == "--data-path"
+    assert actual_cmd[4].endswith("BSA1.mgf")
+    assert actual_cmd[5] == "--output-path"
+    assert actual_cmd[7] == "num_beams=5"
+    assert len(actual_cmd) == 8
+
+
+def test_instanovo_invalid_model_used_logs_error(tmp_path: Path, caplog) -> None:
+    """An unrecognized model_used should log an error."""
+    urun_dict = urgap.URunDict(
+        {
+            "parameters": {
+                "Instanovo:1.2.2": {
+                    "model_used": "not_a_real_mode",
+                },
+            },
+            "unode_parameters": {
+                "storage_base_uri": f"file://{tmp_path}",
+            },
+        },
+    )
+
+    ufiles = urgap.UFileList(
+        [
+            urgap.UFile(
+                uri=f"file://{urgap._test_folder}/data?uftype="
+                f"{urgap.uftypes.proteomics.converter.PYMZML_MGF}#mgfs/BSA1.mgf",
+            ),
+        ],
+    )
+
+    instanovo_node = urgap.init_node("Instanovo:1.2.2")
+
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value.returncode = 0
+        mock_run.return_value.stdout = ""
+        with caplog.at_level(logging.ERROR):
+            with pytest.raises(FileNotFoundError):
+                instanovo_node.run(ufiles, urun_dict)
+
+    assert "Unknown search mode" in caplog.text
+
+
+def test_instanovo_param_file_and_cli_params_raises(tmp_path: Path) -> None:
+    """Providing both a yaml config file and non-model_used CLI parameters should raise ValueError."""
+    urun_dict = urgap.URunDict(
+        {
+            "parameters": {
+                "Instanovo:1.2.2": {
+                    "model_used": "transformer",
+                    "num_beams": 5,
+                },
+            },
+            "unode_parameters": {
+                "storage_base_uri": f"file://{tmp_path}",
+            },
+        },
+    )
+
+    ufiles = urgap.UFileList(
+        [
+            urgap.UFile(
+                uri=f"file://{urgap._test_folder}/data?uftype="
+                f"{urgap.uftypes.proteomics.converter.PYMZML_MGF}#mgfs/BSA1.mgf",
+            ),
+            urgap.UFile(
+                uri=f"file://{urgap._test_folder}/data?uftype="
+                f"{urgap.uftypes.proteomics.denovosearch.INSTANOVO_YAML}#instanovo_params/default.yaml",
+            ),
+        ],
+    )
+
+    instanovo_node = urgap.init_node("Instanovo:1.2.2")
+
+    with pytest.raises(ValueError) as excinfo:
+        instanovo_node.run(ufiles, urun_dict)
+
+    assert (
+        "Both a config yaml file and command-line parameters in the "
+        "urun_dict were provided for Instanovo. Please provide only one."
+        in str(excinfo.value)
+    )
