@@ -27,7 +27,7 @@ class Instanovo(urgap.unode.UNodeBase):
         "parameters_not_triggering_rerun": [],
         "input_uftypes": {
             urgap.uftypes.proteomics.converter.PYMZML_MGF: {"min": 1, "max": 1},
-            urgap.uftypes.proteomics.denovosearch.INSTANOVO_YAML: {"min": 1, "max": 1},
+            urgap.uftypes.proteomics.denovosearch.INSTANOVO_YAML: {"min": 0, "max": 1},
         },
         "output_uftypes": {
             urgap.uftypes.proteomics.denovosearch.INSTANOVO_CSV : {"min": 1, "max": 1},
@@ -85,6 +85,11 @@ class Instanovo(urgap.unode.UNodeBase):
 
         Returns:
             UTrace object, combination of urun_dict, ufile_list and unode.meta.
+
+        Raises:
+            ValueError: If both a config yaml file and command-line
+                parameters in the urun_dict are provided. Please provide
+                only one.
         """
         input_params = utrace.urun_dict.parameters[
             f"{self.META_INFO['unode_full_identifier']}"
@@ -92,43 +97,73 @@ class Instanovo(urgap.unode.UNodeBase):
         mgf_file = utrace.input_files.get_path_objects_by_uftype(
             urgap.uftypes.proteomics.converter.PYMZML_MGF,
         )[0]
-        param_file = utrace.input_files.get_path_objects_by_uftype(
+
+        param_files = utrace.input_files.get_path_objects_by_uftype(
             urgap.uftypes.proteomics.denovosearch.INSTANOVO_YAML,
-        )[0]
+        )
 
         output_csv = utrace.output_files.get_path_objects_by_uftype(
             urgap.uftypes.proteomics.denovosearch.INSTANOVO_CSV,
         )[0]
 
-        # Get the directory containing YOUR custom config file
-        config_dir = Path(param_file).parent.resolve()
+        # command-line overrides, e.g. {"num_beams": 5, "max_length": 30}
+        cli_params_dict = {k: v for k, v in input_params.items() if k != "model_used"}
 
-        # InstaNovo executes from its built-in configs directory, so we need
-        # to calculate the relative path from there to your custom config directory
-        instanovo_configs_dir = self.find_instanovo_configs()
+        param_file_provided = len(param_files) == 1
+        cli_params_provided = bool(cli_params_dict)
 
-        # Calculate relative path from InstaNovo's configs dir to your config dir
-        relative_config_path = os.path.relpath(config_dir, instanovo_configs_dir)
-        model_used = input_params["model_used"]
-        if model_used not in ["transformer", "diffusion"]:
+        if param_file_provided and cli_params_provided:
+            msg = (
+                "Both a config yaml file and command-line parameters in the "
+                "urun_dict were provided for Instanovo. Please provide only one."
+            )
+            raise ValueError(msg)
+
+        model_used = input_params.get("model_used")
+        if model_used is not None and model_used not in ["transformer", "diffusion"]:
             logging.error(
                 "Unknown search mode %s. Search mode has to be either "
                 "'transformer' or 'diffusion'",
                 model_used,
             )
+
         utrace.urun_dict.command_list = [
             str(self.exe_path),
-            f"{model_used}",
+        ]
+
+        if model_used is not None:
+            utrace.urun_dict.command_list.append(f"{model_used}")
+
+        utrace.urun_dict.command_list += [
             "predict",
             "--data-path",
             mgf_file,
             "--output-path",
             output_csv,
-            "--config-path",
-            relative_config_path,
-            "--config-name",
-            param_file.stem,
         ]
+
+        if param_file_provided:
+            param_file = param_files[0]
+            # Get the directory containing YOUR custom config file
+            config_dir = Path(param_file).parent.resolve()
+
+            # InstaNovo executes from its built-in configs directory, so we need
+            # to calculate the relative path from there to your custom config directory
+            instanovo_configs_dir = self.find_instanovo_configs()
+
+            # Calculate relative path from InstaNovo's configs dir to your config dir
+            relative_config_path = os.path.relpath(config_dir, instanovo_configs_dir)
+
+            utrace.urun_dict.command_list += [
+                "--config-path",
+                relative_config_path,
+                "--config-name",
+                param_file.stem,
+            ]
+        else:
+            for key, value in cli_params_dict.items():
+                utrace.urun_dict.command_list.append(f"{key}={value}")
+
         return utrace
 
     def postflight(
