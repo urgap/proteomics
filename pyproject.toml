@@ -11,7 +11,7 @@ dependencies = [
     "urgap[all]",
     "numpy>=1.26,<2.0",
     "pandas>2.0.0,<2.1.0",
-    "simepy",
+    "simepy>=0.3.2",
     "pymzml>=2.5.0",
     "pyiohat>=1.9.0"
 ]
