@@ -1,4 +1,4 @@
-0j-"""Ursgal percolator_3_5_0 wrapper."""
+"""urgap percolator_3_7_1 wrapper."""
 
 import os
 import shutil
@@ -9,12 +9,12 @@ import numpy as np
 import pandas as pd
 from chemical_composition.chemical_composition_kb import PROTON
 
-import ursgal
+import urgap
 
 
-class percolator_3_5_0(ursgal.unode.UNodeBase):
+class percolator_3_7_1(urgap.unode.UNodeBase):
     """
-    Ursgal wrapper for the percolator_3_5_0 executable.
+    urgap wrapper for the percolator_3_7_1 executable.
 
     Percolator uses a semi-supervised machine learning to discriminate correct from
     incorrect peptide-spectrum matches, and calculates accurate statistics such as
@@ -26,21 +26,21 @@ class percolator_3_5_0(ursgal.unode.UNodeBase):
         "name": "Percolator",
         "wrapper_version": {"major": 1, "minor": 0, "patch": 0},
         "versions": [
-            {"version": "3.0.9", "exe_path": "percolator/3_0_9/pyiohat_resource.py"},
+            {"version": "3.7.1", "exe_path": "percolator/3_7_1/percolator"},
         ],
         "parameters_not_triggering_rerun": [],
         "input_uftypes": {
-            ursgal.uftypes.proteomics.converter.PYIOHAT_CSV: {
+            urgap.uftypes.proteomics.converter.PYIOHAT_CSV: {
                 "min": 1,
                 "max": -1,
             },
-            ursgal.uftypes.proteomics.FASTA: {
+            urgap.uftypes.proteomics.FASTA: {
                 "min": 0,
                 "max": 1,
             },
         },
         "output_uftypes": {
-            ursgal.uftypes.proteomics.validator.PERCOLATOR_CSV: {"min": 1, "max": 2},
+            urgap.uftypes.proteomics.validator.PERCOLATOR_CSV: {"min": 1, "max": 2},
         },
         "engine_type": ("validation", "proteomics"),
         "citation": """
@@ -50,15 +50,15 @@ class percolator_3_5_0(ursgal.unode.UNodeBase):
     }
 
     def __init__(self, *args, **kwargs):
-        """Initialize percolator_3_5_0 class."""
-        super(percolator_3_5_0, self).__init__(*args, **kwargs)
+        """Initialize percolator_3_7_1 class."""
+        super(percolator_3_7_1, self).__init__(*args, **kwargs)
         pass
 
     def preflight(
         self,
-        utrace: ursgal.UTrace,
-    ) -> ursgal.UTrace:
-        """Preflight routine for percolator_3_5_0 wrapper.
+        utrace: urgap.UTrace,
+    ) -> urgap.UTrace:
+        """Preflight routine for percolator_3_7_1 wrapper.
 
         During preflight,
             - input file aligned with percolator style is formatted and created
@@ -72,7 +72,7 @@ class percolator_3_5_0(ursgal.unode.UNodeBase):
         """
         self.output_type_dict = utrace.output_files.get_index_groups_by_uftypes()
         psm_file_indices = utrace.output_files.get_indices_by_uftype(
-            ursgal.uftypes.proteomics.validator.PERCOLATOR_CSV
+            urgap.uftypes.proteomics.validator.PERCOLATOR_CSV
         )
         self.result_psms = (
             str(utrace.output_files[psm_file_indices[0]].path) + "targets_broken"
@@ -97,13 +97,13 @@ class percolator_3_5_0(ursgal.unode.UNodeBase):
 
     def postflight(
         self,
-        utrace: ursgal.UTrace,
-    ) -> ursgal.UTrace:
-        """Postflight routine for percolator_2_08 wrapper.
+        utrace: urgap.UTrace,
+    ) -> urgap.UTrace:
+        """Postflight routine for percolator_3_7_1 wrapper.
 
         During postflight the individual fixed and decoy dataframes coming from the
         percolator tool, are read and merged together before they are stored into the
-        pre-defined ursgal output file.
+        pre-defined urgap output file.
 
         Args:
             utrace: Combination of urun_dict, ufile_list and unode.meta.
@@ -156,13 +156,13 @@ class percolator_3_5_0(ursgal.unode.UNodeBase):
         idx = self.output_type_dict[".percolator.csv"][0]
         final_df.to_csv(utrace.output_files[idx].path)
 
-        # Part specific for only version 3.5.0
-        if self.META_INFO["version"] == "3.5.0":
+        # Part specific for only version 3.7.1
+        if self.META_INFO["unode_version"] == "3.7.1":
             if (
                 utrace.output_files[0].path.parent / "target_protein_qvals.tsv"
             ).exists():
                 utrace.extend_output_files_by_uftype(
-                    ursgal.uftypes.proteomics.validator.PERCOLATOR_CSV
+                    urgap.uftypes.proteomics.validator.PERCOLATOR_CSV
                 )
                 protein_targets = (
                     utrace.output_files[0].path.parent / "target_protein_qvals.tsv"
@@ -187,8 +187,8 @@ class percolator_3_5_0(ursgal.unode.UNodeBase):
 
     def create_command_list(
         self,
-        utrace: ursgal.UTrace,
-    ) -> ursgal.UTrace:
+        utrace: urgap.UTrace,
+    ) -> urgap.UTrace:
         """Create the command list to execute percolator executable.
 
         Based on the input parameters, the command list is created, which will be used
@@ -200,31 +200,39 @@ class percolator_3_5_0(ursgal.unode.UNodeBase):
         Returns:
             UTrace object, combination of urun_dict, ufile_list and unode.meta.
         """
-        for key, translated_dict in utrace.urun_dict.translations["all_params"].items():
-            if key in [
-                "bigger_scores_better",
-                "validation_score_field",
-                "delimiter",
-                "enzyme",
-                "database",
-                "cpus",
-            ]:
+        # Percolator-specific mapping from internal param name -> CLI flag.
+        # Extend this as new percolator params are supported.
+        CLI_FLAG_MAP = {
+            "infer_proteins": "--picked-protein",
+            "percolator_post_processing": None,  # positional, handled below
+        }
+
+        params_dict = utrace.urun_dict.parameters[
+            f"{self.META_INFO['unode_full_identifier']}"
+        ]
+
+        # Params consumed elsewhere (create_input_file) or not CLI-relevant.
+        skip_keys = {
+            "bigger_scores_better",
+            "validation_score_field",
+            "delimiter",
+            "enzyme",
+            "database",
+            "cpus",
+        }
+
+        for key, value in params_dict.items():
+            if key in skip_keys:
                 continue
-            # Part specific for only version 3.5.0
-            if self.META_INFO["version"] == "3.5.0":
-                if (
-                    translated_dict["translated_value"] is True
-                    and translated_dict["translated_key"] == "--picked-protein"
-                ):
-                    utrace.urun_dict.command_list.append(
-                        translated_dict["translated_key"]
-                    )
+
+            if key == "infer_proteins":
+                if value is True:
+                    utrace.urun_dict.command_list.append(CLI_FLAG_MAP["infer_proteins"])
                     utrace.urun_dict.command_list.append(utrace.input_files[1].path)
-                    # target+decoy protein q-val output files
+
                     target_proteins = (
                         utrace.output_files[0].path.parent / "target_protein_qvals.tsv"
                     )
-
                     decoy_proteins = (
                         utrace.output_files[0].path.parent / "decoy_protein_qvals.tsv"
                     )
@@ -233,27 +241,28 @@ class percolator_3_5_0(ursgal.unode.UNodeBase):
                     utrace.urun_dict.command_list.append(f"{target_proteins}")
                     utrace.urun_dict.command_list.append("-L")
                     utrace.urun_dict.command_list.append(f"{decoy_proteins}")
+                continue
 
-            elif translated_dict["translated_value"] is True:
-                utrace.urun_dict.command_list.append(translated_dict["translated_key"])
-            elif translated_dict["translated_value"] is False:
+            if key == "percolator_post_processing":
+                if value is not None:
+                    utrace.urun_dict.command_list.append(value)
                 continue
-            elif translated_dict["translated_value"] is None:
+
+            if value is True:
+                flag = CLI_FLAG_MAP.get(key, f"--{key}")
+                utrace.urun_dict.command_list.append(flag)
+            elif value is False or value is None:
                 continue
-            elif translated_dict["original_key"] == "percolator_post_processing":
-                utrace.urun_dict.command_list.append(
-                    translated_dict["translated_value"]
-                )
             else:
-                utrace.urun_dict.command_list.append(translated_dict["translated_key"])
-                utrace.urun_dict.command_list.append(
-                    translated_dict["translated_value"]
-                )
+                flag = CLI_FLAG_MAP.get(key, f"--{key}")
+                utrace.urun_dict.command_list.append(flag)
+                utrace.urun_dict.command_list.append(value)
+
         return utrace
 
     def create_input_file(
         self,
-        utrace: ursgal.UTrace,
+        utrace: urgap.UTrace,
     ) -> os.PathLike:
         """Create the input file following percolator convention.
 
@@ -265,34 +274,11 @@ class percolator_3_5_0(ursgal.unode.UNodeBase):
         """
         req_headers = ["PSMId", "Label", "ScanNr", "Peptide", "Proteins"]
         features = [
-            "PSMId",
-            "Label",
-            "ScanNr",
-            "lnrsp",
-            "deltlcn",
-            "deltcn",
-            "score",  # Xcorr
-            "sp",
-            "mass",  # mass
-            "peplen",  # peplen
-            # "IonFrac",
-            "charge_1",
-            "charge_2",
-            "charge_3",
-            "charge_4",
-            "charge_5",
-            "charge_6",
-            "charge_7",
-            "charge_8",
-            "charge_9",
-            "charge_10",
-            "enzn",
-            "enzc",
-            "enzint",
-            "dm",
-            "absdm",
-            "Peptide",
-            "Proteins",
+            "PSMId", "Label", "ScanNr", "lnrsp", "deltlcn", "deltcn",
+            "score", "sp", "mass", "peplen",
+            "charge_1", "charge_2", "charge_3", "charge_4", "charge_5",
+            "charge_6", "charge_7", "charge_8", "charge_9", "charge_10",
+            "enzn", "enzc", "enzint", "dm", "absdm", "Peptide", "Proteins",
         ]
 
         all_headers = req_headers + features
@@ -300,12 +286,14 @@ class percolator_3_5_0(ursgal.unode.UNodeBase):
         default_directions_features.update({col: "-" for col in req_headers})
         default_directions_features["PSMId"] = "DefaultDirection"
 
-        delimiter = utrace.urun_dict.translations["all_params"]["delimiter"][
-            "translated_value"
+        params_dict = utrace.urun_dict.parameters[
+            f"{self.META_INFO['unode_full_identifier']}"
         ]
 
+        delimiter = params_dict["delimiter"]
+
         unified_files = utrace.input_files.get_path_objects_by_uftype(
-            ursgal.uftypes.proteomics.converter.PYIOHAT_CSV
+            urgap.uftypes.proteomics.converter.PYIOHAT_CSV
         )
         dfs = []
         for f in unified_files:
@@ -323,28 +311,20 @@ class percolator_3_5_0(ursgal.unode.UNodeBase):
         # One hot encode charges
         df = pd.merge(
             df,
-            pd.get_dummies(df.charge, prefix="charge"),
+            pd.get_dummies(df.charge, prefix="charge").astype(int),
             left_index=True,
             right_index=True,
         )
         df = df.loc[1:]
 
-        # charges = df['Charge'].unique()
         empty_charges = [
             f"charge_{i}" for i in range(0, 11) if i not in df["charge"].unique()
         ]
         df.loc[:, empty_charges] = 0
 
-        # Add Pep Len
         df["peplen"] = df["sequence"].str.len()
-
-        # mass
         df["mass"] = (df["exp_mz"] * df["charge"]) - (df["charge"] - 1) * PROTON
-
-        # add dm
         df["dm"] = df["ucalc_mz"] - df["exp_mz"]
-
-        # absdm ???
         df["absdm"] = abs(df["dm"])
 
         if len(df["search_engine"].unique()) == 1:
@@ -354,12 +334,10 @@ class percolator_3_5_0(ursgal.unode.UNodeBase):
             raise Exception(
                 "Multiple engines detected in dataframe. Percolator can only handle one search engine at a time."
             )
-        bigger_scores_better = utrace.urun_dict.translations["all_params"][
-            "bigger_scores_better"
-        ]["translated_value"][se]
-        validate_score_field = utrace.urun_dict.translations["all_params"][
-            "validation_score_field"
-        ]["translated_value"][se]
+
+        bigger_scores_better = params_dict["bigger_scores_better"][se]
+        validate_score_field = params_dict["validation_score_field"][se]
+
         df["score"] = df[validate_score_field]
         if bigger_scores_better is False:
             df["score"] = -np.log10(df["score"])
@@ -368,26 +346,13 @@ class percolator_3_5_0(ursgal.unode.UNodeBase):
         df["lnrsp"] = np.log(df["sp"])
 
         def applyParallel(dfGrouped, func, threads=-1):
-            """
-            Execute a task in a parallel manner.
-
-            Args:
-                dfGrouped (pd.DataFrame): grouped by dataframe to perform analysis on
-                func (function) : function to be applied in parallel
-                threads (int): number of threads to be used for parallelization
-
-            Returns:
-                pd.DataFrame following processing of input df with defined func
-            """
             if threads == -1:
                 threads = cpu_count()
             with Pool(threads) as p:
                 ret_list = p.map(func, [group for name, group in dfGrouped])
             return pd.concat(ret_list)
 
-        threads = utrace.urun_dict.translations["all_params"]["cpus"][
-            "translated_value"
-        ]
+        threads = params_dict.get("cpus", 1)
         df = applyParallel(
             df.groupby("spectrum_id"), self.delta_score, threads=threads
         ).reset_index(drop=True)
@@ -399,18 +364,12 @@ class percolator_3_5_0(ursgal.unode.UNodeBase):
         df["modifications"] = df["modifications"].fillna("")
         df.loc[df["modifications"] == "", "Peptide"] = (
             df["sequence_pre_aa"].str.split(delimiter).str[0]
-            + "."
-            + df["sequence"]
-            + "."
+            + "." + df["sequence"] + "."
             + df["sequence_post_aa"].str.split(delimiter).str[0]
         )
         df.loc[df["modifications"] != "", "Peptide"] = (
             df["sequence_pre_aa"].str.split(delimiter).str[0]
-            + "."
-            + df["sequence"]
-            + "[#"
-            + df["modifications"]
-            + "]."
+            + "." + df["sequence"] + "[#" + df["modifications"] + "]."
             + df["sequence_post_aa"].str.split(delimiter).str[0]
         )
 
@@ -428,11 +387,7 @@ class percolator_3_5_0(ursgal.unode.UNodeBase):
             feature_df["Proteins"].str.split(r"<\|>").str.join("\t")
         )
 
-        feature_df.to_csv(
-            fname,
-            sep="\t",
-            index=False,
-        )
+        feature_df.to_csv(fname, sep="\t", index=False)
         self.remove_quotes(fname)
 
         _new = list(old_columns) + ["PSMId"]
