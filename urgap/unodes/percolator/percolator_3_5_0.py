@@ -1,4 +1,4 @@
-"""Ursgal percolator_3_5_0 wrapper."""
+0j-"""Ursgal percolator_3_5_0 wrapper."""
 
 import os
 import shutil
@@ -23,53 +23,12 @@ class percolator_3_5_0(ursgal.unode.UNodeBase):
     """
 
     META_INFO = {
-        "name": "percolator_3_5_0",
-        "version": "3.5.0",
-        "release_date": "19.04.2020",
+        "name": "Percolator",
         "wrapper_version": {"major": 1, "minor": 0, "patch": 0},
-        "engine_type": ("validation", "proteomics"),
-        "platform_independent": False,
-        "utranslation_style": "percolator_style_2",
-        "engine": {
-            "darwin": {
-                "arm64": {
-                    "exe": "percolator",
-                    "uri": None,
-                    "urn": "darwin/arm64/percolator_3_5_0.zip",
-                    "urn_md5": "8aab634972d4c4cc9010b53681baf37f",
-                    "external_md5": None,
-                    "external_url": None,
-                },
-                "x86_64": {
-                    "exe": "percolator",
-                    "uri": None,
-                    "urn": "darwin/x86_64/percolator_3_5_0.zip",
-                    "urn_md5": "8aab634972d4c4cc9010b53681baf37f",
-                    "external_md5": None,
-                    "external_url": None,
-                },
-            },
-            "linux": {
-                "arm64": {
-                    "exe": "percolator",
-                    "uri": None,
-                    "urn": "linux/arm64/percolator_3_5_0.zip",
-                    "urn_md5": "106b0abbba163d9d5e6e1a512f130e9e",
-                    # ^-- build by hand - if ursgal.packaging system is used, then md5 cb1618ab855e69e80b2d32b4183b6a18
-                    "external_md5": None,
-                    "external_url": None,
-                },
-                "x86_64": {
-                    "exe": "percolator",
-                    "uri": None,
-                    "urn": "linux/x86_64/percolator_3_5_0.zip",
-                    "urn_md5": "106b0abbba163d9d5e6e1a512f130e9e",
-                    # ^-- build by hand - if ursgal.packaging system is used, then md5 cb1618ab855e69e80b2d32b4183b6a18
-                    "external_md5": None,
-                    "external_url": None,
-                },
-            },
-        },
+        "versions": [
+            {"version": "3.0.9", "exe_path": "percolator/3_0_9/pyiohat_resource.py"},
+        ],
+        "parameters_not_triggering_rerun": [],
         "input_uftypes": {
             ursgal.uftypes.proteomics.converter.PYIOHAT_CSV: {
                 "min": 1,
@@ -83,7 +42,7 @@ class percolator_3_5_0(ursgal.unode.UNodeBase):
         "output_uftypes": {
             ursgal.uftypes.proteomics.validator.PERCOLATOR_CSV: {"min": 1, "max": 2},
         },
-        "download_on_demand": True,
+        "engine_type": ("validation", "proteomics"),
         "citation": """
         The, M., MacCoss, M. J., Noble, W. S., & Käll, L. (2016). Fast and Accurate Protein False Discovery Rates on Large-Scale Proteomics Data Sets with Percolator 3.0. 
         In Journal of the American Society for Mass Spectrometry (Vol. 27, Issue 11, pp. 1719–1727). American Chemical Society (ACS). https://doi.org/10.1007/s13361-016-1460-7
