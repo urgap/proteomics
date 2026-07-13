@@ -41,19 +41,53 @@ def test_instanovo_command_construction_yaml_no_model(tmp_path: Path) -> None:
         tmp[unode]["resource_available"] = True
         return unode_obj, tmp
 
-    # Patch the manager dependency check to pretend the binary exists
+    # 1. Patch the manager dependency check to pretend the binary is available
     with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
-        # Initialize first so urgap safely loads the class into its internal manager lookup map
-        instanovo_node = urgap.init_node("Instanovo:1.2.2")
-        
-        # Now we target the class type directly from the manager's live cache to avoid string path imports
-        instanovo_cls = urgap.instances.unode_manager.data["all"]["Instanovo:1.2.2"]
-        
-        with patch.object(instanovo_cls, "exe_path", new_callable=PropertyMock) as mock_exe:
+        # 2. Patch the class property directly on the class definition
+        with patch("urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.exe_path", new_callable=PropertyMock) as mock_exe:
             mock_exe.return_value = Path("instanovo")
+            instanovo_node = urgap.init_node("Instanovo:1.2.2")
 
-            # Mock Path.exists to return True so the YAML file passes preflight checks
-            with patch.object(Path, "exists", return_value=True), patch("subprocess.run") as mock_run:
+            # 3. Patch subprocess.run
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value.returncode = 0
+                mock_run.return_value.stdout = ""
+                
+                # Run inside a try/except block so we stay inside the context manager
+                try:
+                    instanovo_node.run(ufiles, urun_dict)
+                except FileNotFoundError:
+                    # We expect this because the mock doesn't produce the output .csv
+                    pass
+
+    # Now mock_run is fully inside scope and populated!
+    actual_cmd = [str(c) for c in mock_run.call_args[0][0]]
+
+    assert actual_cmd[0].endswith("instanovo")
+    assert actual_cmd[1] == "predict"
+    assert actual_cmd[2] == "--data-path"
+    assert actual_cmd[3].endswith("BSA1.mgf")
+    assert actual_cmd[4] == "--output-path"
+    assert actual_cmd[6] == "--config-path"
+    assert actual_cmd[8] == "--config-name"
+    assert actual_cmd[9] == "default"
+    assert len(actual_cmd) == 10
+
+    original_check_deps = urgap.unode_manager.UNodeManager.check_unode_dependencies
+
+    def mock_check_dependencies(self, unode: str) -> tuple:
+        unode_obj, tmp = original_check_deps(self, unode)
+        tmp[unode]["resource_available"] = True
+        return unode_obj, tmp
+
+    # 1. Patch the manager dependency check to pretend the file exists
+    with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
+        # 2. Patch the class property directly on the class definition to bypass read-only restrictions
+        with patch("urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.exe_path", new_callable=PropertyMock) as mock_exe:
+            mock_exe.return_value = Path("instanovo")
+            instanovo_node = urgap.init_node("Instanovo:1.2.2")
+
+            with patch("subprocess.run") as mock_run:
                 mock_run.return_value.returncode = 0
                 mock_run.return_value.stdout = ""
                 with pytest.raises(FileNotFoundError):
@@ -104,14 +138,14 @@ def test_instanovo_command_construction_with_model_and_cli_params(tmp_path: Path
         tmp[unode]["resource_available"] = True
         return unode_obj, tmp
 
+    # 1. Patch the manager dependency check to pretend the file exists
     with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
-        instanovo_node = urgap.init_node("Instanovo:1.2.2")
-        instanovo_cls = urgap.instances.unode_manager.data["all"]["Instanovo:1.2.2"]
-        
-        with patch.object(instanovo_cls, "exe_path", new_callable=PropertyMock) as mock_exe:
+        # 2. Patch the class property directly on the class definition to bypass read-only restrictions
+        with patch("urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.exe_path", new_callable=PropertyMock) as mock_exe:
             mock_exe.return_value = Path("instanovo")
+            instanovo_node = urgap.init_node("Instanovo:1.2.2")
 
-            with patch.object(Path, "exists", return_value=True), patch("subprocess.run") as mock_run:
+            with patch("subprocess.run") as mock_run:
                 mock_run.return_value.returncode = 0
                 mock_run.return_value.stdout = ""
                 with pytest.raises(FileNotFoundError):
