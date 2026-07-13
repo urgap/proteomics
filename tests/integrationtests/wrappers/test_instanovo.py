@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, PropertyMock
 
 import pytest
 import urgap
@@ -34,26 +34,25 @@ def test_instanovo_command_construction_yaml_no_model(tmp_path: Path) -> None:
         ],
     )
 
-    # Safely get the original function here, INSIDE the test execution phase
     original_check_deps = urgap.unode_manager.UNodeManager.check_unode_dependencies
 
     def mock_check_dependencies(self, unode: str) -> tuple:
         unode_obj, tmp = original_check_deps(self, unode)
         tmp[unode]["resource_available"] = True
-        if unode_obj.exe_path is None:
-            # Safely mock the read-only property on the instance using patch.object
-            patcher = patch.object(unode_obj, "exe_path", Path("instanovo"))
-            patcher.start()
         return unode_obj, tmp
 
+    # 1. Patch the manager dependency check to pretend the file exists
     with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
-        instanovo_node = urgap.init_node("Instanovo:1.2.2")
+        # 2. Patch the class property directly on the class definition to bypass read-only restrictions
+        with patch("urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.exe_path", new_callable=PropertyMock) as mock_exe:
+            mock_exe.return_value = Path("instanovo")
+            instanovo_node = urgap.init_node("Instanovo:1.2.2")
 
-        with patch("subprocess.run") as mock_run:
-            mock_run.return_value.returncode = 0
-            mock_run.return_value.stdout = ""
-            with pytest.raises(FileNotFoundError):
-                instanovo_node.run(ufiles, urun_dict)
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value.returncode = 0
+                mock_run.return_value.stdout = ""
+                with pytest.raises(FileNotFoundError):
+                    instanovo_node.run(ufiles, urun_dict)
 
     actual_cmd = [str(c) for c in mock_run.call_args[0][0]]
 
@@ -98,19 +97,20 @@ def test_instanovo_command_construction_with_model_and_cli_params(tmp_path: Path
     def mock_check_dependencies(self, unode: str) -> tuple:
         unode_obj, tmp = original_check_deps(self, unode)
         tmp[unode]["resource_available"] = True
-        if unode_obj.exe_path is None:
-            patcher = patch.object(unode_obj, "exe_path", Path("instanovo"))
-            patcher.start()
         return unode_obj, tmp
 
+    # 1. Patch the manager dependency check to pretend the file exists
     with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
-        instanovo_node = urgap.init_node("Instanovo:1.2.2")
+        # 2. Patch the class property directly on the class definition to bypass read-only restrictions
+        with patch("urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.exe_path", new_callable=PropertyMock) as mock_exe:
+            mock_exe.return_value = Path("instanovo")
+            instanovo_node = urgap.init_node("Instanovo:1.2.2")
 
-        with patch("subprocess.run") as mock_run:
-            mock_run.return_value.returncode = 0
-            mock_run.return_value.stdout = ""
-            with pytest.raises(FileNotFoundError):
-                instanovo_node.run(ufiles, urun_dict)
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value.returncode = 0
+                mock_run.return_value.stdout = ""
+                with pytest.raises(FileNotFoundError):
+                    instanovo_node.run(ufiles, urun_dict)
 
     actual_cmd = [str(c) for c in mock_run.call_args[0][0]]
 
