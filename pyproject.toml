@@ -6,18 +6,18 @@ build-backend = "hatchling.build"
 name = "urgap-proteomics"
 version = "0.0.1"
 description = "Urgap proteomics specific extension"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
-    "urgap[all]",
+    "urgap",
     "pymzml>=2.5.0",
-    "pyiohat>=1.9.0"
+    "pyiohat>=1.9.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest",
     "pytest-asyncio>=0.23",
-    "urgap[dev]",
+    "urgap[all]",
 ]
 
 

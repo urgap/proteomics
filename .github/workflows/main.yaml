@@ -58,7 +58,7 @@ jobs:
         run: |
           pip install uv
           uv pip install pytest pytest-asyncio --system
-          uv pip install . --system
+          uv pip install ".[dev]" --system
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
