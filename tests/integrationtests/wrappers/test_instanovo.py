@@ -41,14 +41,15 @@ def test_instanovo_command_construction_yaml_no_model(tmp_path: Path) -> None:
         tmp[unode]["resource_available"] = True
         return unode_obj, tmp
 
-    # 1. Patch the manager dependency check to pretend the file exists
+    # Patch the manager dependency check to pretend the binary exists
     with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
-        # 2. Patch the class property directly on the class definition to bypass read-only restrictions
+        # Patch the class property directly on the class definition to bypass read-only restrictions
         with patch("urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.exe_path", new_callable=PropertyMock) as mock_exe:
             mock_exe.return_value = Path("instanovo")
             instanovo_node = urgap.init_node("Instanovo:1.2.2")
 
-            with patch("subprocess.run") as mock_run:
+            # Mock Path.exists to return True so the YAML file passes preflight checks
+            with patch.object(Path, "exists", return_value=True), patch("subprocess.run") as mock_run:
                 mock_run.return_value.returncode = 0
                 mock_run.return_value.stdout = ""
                 with pytest.raises(FileNotFoundError):
@@ -99,14 +100,12 @@ def test_instanovo_command_construction_with_model_and_cli_params(tmp_path: Path
         tmp[unode]["resource_available"] = True
         return unode_obj, tmp
 
-    # 1. Patch the manager dependency check to pretend the file exists
     with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
-        # 2. Patch the class property directly on the class definition to bypass read-only restrictions
         with patch("urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.exe_path", new_callable=PropertyMock) as mock_exe:
             mock_exe.return_value = Path("instanovo")
             instanovo_node = urgap.init_node("Instanovo:1.2.2")
 
-            with patch("subprocess.run") as mock_run:
+            with patch.object(Path, "exists", return_value=True), patch("subprocess.run") as mock_run:
                 mock_run.return_value.returncode = 0
                 mock_run.return_value.stdout = ""
                 with pytest.raises(FileNotFoundError):
