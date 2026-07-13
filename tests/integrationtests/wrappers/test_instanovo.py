@@ -1,18 +1,13 @@
 """Integration test for Instanovo."""
 
+import logging
+
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
 import urgap
-
-import os
-import subprocess
-import time 
-import logging
-import threading
-import psutil
-from unittest.mock import patch
 
 
 def test_instanovo_command_construction_yaml_no_model(tmp_path: Path) -> None:
@@ -136,9 +131,8 @@ def test_instanovo_invalid_model_used_logs_error(tmp_path: Path, caplog) -> None
     with patch("subprocess.run") as mock_run:
         mock_run.return_value.returncode = 0
         mock_run.return_value.stdout = ""
-        with caplog.at_level(logging.ERROR):
-            with pytest.raises(FileNotFoundError):
-                instanovo_node.run(ufiles, urun_dict)
+        with caplog.at_level(logging.ERROR), pytest.raises(FileNotFoundError):
+            instanovo_node.run(ufiles, urun_dict)
 
     assert "Unknown search mode" in caplog.text
 
