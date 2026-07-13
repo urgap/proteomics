@@ -7,19 +7,21 @@ from unittest.mock import patch
 import pytest
 import urgap
 
-# 1. Grab a clean reference to the original method to prevent infinite loops
+# Clean reference to prevent infinite recursion loop
 _original_check_deps = urgap.unode_manager.UNodeManager.check_unode_dependencies
 
 
 def mock_check_dependencies(self, unode: str) -> tuple:
     """Mock out dependency check to trick the manager into thinking the binary exists."""
-    # 2. Call the stored original method safely
     unode_obj, tmp = _original_check_deps(self, unode)
     
-    # 3. Inject our mock flags
+    # 1. Force the manager to report that the executable exists
     tmp[unode]["resource_available"] = True
+    
+    # 2. Use patch.object to bypass the read-only property restriction safely
     if unode_obj.exe_path is None:
-        unode_obj.exe_path = Path("instanovo")
+        patcher = patch.object(unode_obj, "exe_path", Path("instanovo"))
+        patcher.start()
         
     return unode_obj, tmp
 
