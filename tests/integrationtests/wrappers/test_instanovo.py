@@ -7,24 +7,6 @@ from unittest.mock import patch
 import pytest
 import urgap
 
-# Clean reference to prevent infinite recursion loop
-_original_check_deps = urgap.unode_manager.UNodeManager.check_unode_dependencies
-
-
-def mock_check_dependencies(self, unode: str) -> tuple:
-    """Mock out dependency check to trick the manager into thinking the binary exists."""
-    unode_obj, tmp = _original_check_deps(self, unode)
-    
-    # 1. Force the manager to report that the executable exists
-    tmp[unode]["resource_available"] = True
-    
-    # 2. Use patch.object to bypass the read-only property restriction safely
-    if unode_obj.exe_path is None:
-        patcher = patch.object(unode_obj, "exe_path", Path("instanovo"))
-        patcher.start()
-        
-    return unode_obj, tmp
-
 
 def test_instanovo_command_construction_yaml_no_model(tmp_path: Path) -> None:
     """Test that command_list is built correctly with no model_used, using a yaml config file."""
@@ -52,7 +34,18 @@ def test_instanovo_command_construction_yaml_no_model(tmp_path: Path) -> None:
         ],
     )
 
-    # Patch the manager with our recursion-safe mock wrapper
+    # Safely get the original function here, INSIDE the test execution phase
+    original_check_deps = urgap.unode_manager.UNodeManager.check_unode_dependencies
+
+    def mock_check_dependencies(self, unode: str) -> tuple:
+        unode_obj, tmp = original_check_deps(self, unode)
+        tmp[unode]["resource_available"] = True
+        if unode_obj.exe_path is None:
+            # Safely mock the read-only property on the instance using patch.object
+            patcher = patch.object(unode_obj, "exe_path", Path("instanovo"))
+            patcher.start()
+        return unode_obj, tmp
+
     with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
         instanovo_node = urgap.init_node("Instanovo:1.2.2")
 
@@ -100,7 +93,16 @@ def test_instanovo_command_construction_with_model_and_cli_params(tmp_path: Path
         ],
     )
 
-    # Patch the manager with our recursion-safe mock wrapper
+    original_check_deps = urgap.unode_manager.UNodeManager.check_unode_dependencies
+
+    def mock_check_dependencies(self, unode: str) -> tuple:
+        unode_obj, tmp = original_check_deps(self, unode)
+        tmp[unode]["resource_available"] = True
+        if unode_obj.exe_path is None:
+            patcher = patch.object(unode_obj, "exe_path", Path("instanovo"))
+            patcher.start()
+        return unode_obj, tmp
+
     with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
         instanovo_node = urgap.init_node("Instanovo:1.2.2")
 
