@@ -43,10 +43,14 @@ def test_instanovo_command_construction_yaml_no_model(tmp_path: Path) -> None:
 
     # Patch the manager dependency check to pretend the binary exists
     with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
-        # Patch the class property directly on the class definition to bypass read-only restrictions
-        with patch("urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.exe_path", new_callable=PropertyMock) as mock_exe:
+        # Initialize first so urgap safely loads the class into its internal manager lookup map
+        instanovo_node = urgap.init_node("Instanovo:1.2.2")
+        
+        # Now we target the class type directly from the manager's live cache to avoid string path imports
+        instanovo_cls = urgap.instances.unode_manager.data["all"]["Instanovo:1.2.2"]
+        
+        with patch.object(instanovo_cls, "exe_path", new_callable=PropertyMock) as mock_exe:
             mock_exe.return_value = Path("instanovo")
-            instanovo_node = urgap.init_node("Instanovo:1.2.2")
 
             # Mock Path.exists to return True so the YAML file passes preflight checks
             with patch.object(Path, "exists", return_value=True), patch("subprocess.run") as mock_run:
@@ -101,9 +105,11 @@ def test_instanovo_command_construction_with_model_and_cli_params(tmp_path: Path
         return unode_obj, tmp
 
     with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
-        with patch("urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.exe_path", new_callable=PropertyMock) as mock_exe:
+        instanovo_node = urgap.init_node("Instanovo:1.2.2")
+        instanovo_cls = urgap.instances.unode_manager.data["all"]["Instanovo:1.2.2"]
+        
+        with patch.object(instanovo_cls, "exe_path", new_callable=PropertyMock) as mock_exe:
             mock_exe.return_value = Path("instanovo")
-            instanovo_node = urgap.init_node("Instanovo:1.2.2")
 
             with patch.object(Path, "exists", return_value=True), patch("subprocess.run") as mock_run:
                 mock_run.return_value.returncode = 0
