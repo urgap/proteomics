@@ -34,6 +34,9 @@ def test_instanovo_command_construction_yaml_no_model(tmp_path: Path) -> None:
         ],
     )
 
+    # >>> NEW: mock path for find_instanovo_configs, no filesystem needed
+    mock_configs_dir = tmp_path / "instanovo_only_venv" / "configs"
+
     original_check_deps = urgap.unode_manager.UNodeManager.check_unode_dependencies
 
     def mock_check_dependencies(self, unode: str) -> tuple:
@@ -41,24 +44,51 @@ def test_instanovo_command_construction_yaml_no_model(tmp_path: Path) -> None:
         tmp[unode]["resource_available"] = True
         return unode_obj, tmp
 
-    # 1. Patch the manager dependency check to pretend the binary is available
     with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
-        # 2. Patch the class property directly on the class definition
         with patch("urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.exe_path", new_callable=PropertyMock) as mock_exe:
             mock_exe.return_value = Path("instanovo")
-            instanovo_node = urgap.init_node("Instanovo:1.2.2")
+            # >>> NEW: patch find_instanovo_configs directly
+            with patch(
+                "urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.find_instanovo_configs",
+                return_value=mock_configs_dir,
+            ):
+                instanovo_node = urgap.init_node("Instanovo:1.2.2")
 
-            # 3. Patch subprocess.run
-            with patch("subprocess.run") as mock_run:
-                mock_run.return_value.returncode = 0
-                mock_run.return_value.stdout = ""
-                
-                # Run inside a try/except block so we stay inside the context manager
-                try:
-                    instanovo_node.run(ufiles, urun_dict)
-                except FileNotFoundError:
-                    # We expect this because the mock doesn't produce the output .csv
-                    pass
+                with patch("subprocess.run") as mock_run:
+                    mock_run.return_value.returncode = 0
+                    mock_run.return_value.stdout = ""
+
+                    try:
+                        instanovo_node.run(ufiles, urun_dict)
+                    except FileNotFoundError:
+                        pass
+
+    actual_cmd = [str(c) for c in mock_run.call_args[0][0]]
+    # ... assertions unchanged ...
+
+    # --- second half of test, same pattern ---
+    original_check_deps = urgap.unode_manager.UNodeManager.check_unode_dependencies
+
+    def mock_check_dependencies(self, unode: str) -> tuple:
+        unode_obj, tmp = original_check_deps(self, unode)
+        tmp[unode]["resource_available"] = True
+        return unode_obj, tmp
+
+    with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
+        with patch("urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.exe_path", new_callable=PropertyMock) as mock_exe:
+            mock_exe.return_value = Path("instanovo")
+            # >>> NEW: patch find_instanovo_configs directly
+            with patch(
+                "urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.find_instanovo_configs",
+                return_value=mock_configs_dir,
+            ):
+                instanovo_node = urgap.init_node("Instanovo:1.2.2")
+
+                with patch("subprocess.run") as mock_run:
+                    mock_run.return_value.returncode = 0
+                    mock_run.return_value.stdout = ""
+                    with pytest.raises(FileNotFoundError):
+                        instanovo_node.run(ufiles, urun_dict)
 
     # Now mock_run is fully inside scope and populated!
     actual_cmd = [str(c) for c in mock_run.call_args[0][0]]
