@@ -7,16 +7,17 @@ from unittest.mock import patch
 import pytest
 import urgap
 
+# 1. Grab a clean reference to the original method to prevent infinite loops
+_original_check_deps = urgap.unode_manager.UNodeManager.check_unode_dependencies
+
 
 def mock_check_dependencies(self, unode: str) -> tuple:
     """Mock out dependency check to trick the manager into thinking the binary exists."""
-    # Call the real implementation first
-    unode_obj, tmp = self.__class__.check_unode_dependencies(self, unode)
+    # 2. Call the stored original method safely
+    unode_obj, tmp = _original_check_deps(self, unode)
     
-    # Overwrite the missing path checks so the test passes string validation
+    # 3. Inject our mock flags
     tmp[unode]["resource_available"] = True
-    
-    # Ensure exe_path resolves to something text-subscriptable instead of None
     if unode_obj.exe_path is None:
         unode_obj.exe_path = Path("instanovo")
         
@@ -49,7 +50,7 @@ def test_instanovo_command_construction_yaml_no_model(tmp_path: Path) -> None:
         ],
     )
 
-    # Patch the manager dependency and path resolution framework directly
+    # Patch the manager with our recursion-safe mock wrapper
     with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
         instanovo_node = urgap.init_node("Instanovo:1.2.2")
 
@@ -97,7 +98,7 @@ def test_instanovo_command_construction_with_model_and_cli_params(tmp_path: Path
         ],
     )
 
-    # Patch the manager dependency and path resolution framework directly
+    # Patch the manager with our recursion-safe mock wrapper
     with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
         instanovo_node = urgap.init_node("Instanovo:1.2.2")
 
