@@ -303,6 +303,10 @@ class percolator_3_7_1(urgap.unode.UNodeBase):
 
         old_columns = df.columns
 
+        # Drop PSMs that couldn't be mapped to any protein (no target/decoy status possible,
+        # expected for de novo callers like Instanovo where not every sequence has a protein match)
+        df = df.dropna(subset=["is_decoy"])
+
         df = df.sort_values(["spectrum_id", "rank"])
 
         df.loc[df["is_decoy"] == True, "Label"] = "-1"
@@ -389,6 +393,10 @@ class percolator_3_7_1(urgap.unode.UNodeBase):
 
         feature_df.to_csv(fname, sep="\t", index=False)
         self.remove_quotes(fname)
+
+        # TEMPORARY DEBUG: copy the file somewhere permanent before percolator runs
+        import shutil as _shutil
+        _shutil.copy(fname, "/shared/rc/proteome/urgap/connor_example_scripts/debug_percolator_input.tsv")
 
         _new = list(old_columns) + ["PSMId"]
         self.merged_frame = utrace.output_files[0].path.parent / "merge_frame.csv"
