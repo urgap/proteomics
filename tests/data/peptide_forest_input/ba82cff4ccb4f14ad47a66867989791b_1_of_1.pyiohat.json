@@ -1,0 +1,12 @@
+{
+  "File Origin": "MSFragger",
+  "Parser": "pyiohat/parsers/ident/msfragger_4_parser.py",
+  "Version": [
+    4.0,
+    4.1,
+    4.2,
+    4.3
+  ],
+  "bigger_scores_better": true,
+  "validation_score_field": "msfragger:hyperscore"
+}
