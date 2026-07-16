@@ -1,0 +1,9 @@
+{
+  "File Origin": "MSGFPlus",
+  "Parser": "pyiohat/parsers/ident/msgfplus_2021_03_22_parser.py",
+  "Version": [
+    "v2019_07_03"
+  ],
+  "bigger_scores_better": false,
+  "validation_score_field": "ms-gf:spec_evalue"
+}
