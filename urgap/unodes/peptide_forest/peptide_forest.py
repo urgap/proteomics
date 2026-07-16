@@ -3,6 +3,8 @@
 import json
 import os
 
+from pathlib import Path
+
 import urgap
 
 
@@ -25,7 +27,7 @@ class PeptideForest(urgap.unode.UNodeBase):
             {
                 "version": "3.1.1",
                 "exe_path": "peptide_forest/3_1_1/peptide_forest_3_1_1.py",
-            }
+            },
         ],
         "parameters_not_triggering_rerun": [],
         "input_uftypes": {
@@ -36,14 +38,14 @@ class PeptideForest(urgap.unode.UNodeBase):
             urgap.uftypes.proteomics.validator.PEPTIDEFOREST_CSV: {
                 "min": 1,
                 "max": 1,
-            }
+            },
         },
         "engine": None,
         "engine_type": ("validation", "proteomics"),
         "citation": "Urgap team (2021)",
     }
 
-    def __init__(self, *args: str, **kwargs: str):
+    def __init__(self, *args: str, **kwargs: str) -> None:
         """Initialize PeptideForest class."""
         super().__init__(*args, **kwargs)
 
@@ -65,7 +67,7 @@ class PeptideForest(urgap.unode.UNodeBase):
         """
         config_json = self._write_config_json(utrace)
         output_file = utrace.output_files.get_path_objects_by_uftype(
-            urgap.uftypes.proteomics.validator.PEPTIDEFOREST_CSV
+            urgap.uftypes.proteomics.validator.PEPTIDEFOREST_CSV,
         )[0]
         utrace.urun_dict.command_list = [
             "python",
@@ -98,19 +100,19 @@ class PeptideForest(urgap.unode.UNodeBase):
         ]["initial_engine"]
         data.update({"initial_engine": initial_engine, "column_mapping": {}})
         input_csvs = utrace.input_files.get_path_objects_by_uftype(
-            urgap.uftypes.proteomics.converter.PYIOHAT_CSV
+            urgap.uftypes.proteomics.converter.PYIOHAT_CSV,
         )
         input_metadata_jsons = utrace.input_files.get_path_objects_by_uftype(
-            urgap.uftypes.proteomics.converter.PYIOHAT_JSON
+            urgap.uftypes.proteomics.converter.PYIOHAT_JSON,
         )
         for file in input_csvs:
             file_dict = {str(file): {}}
             file_name = file.name.rstrip(urgap.uftypes.proteomics.converter.PYIOHAT_CSV)
             for json_file in input_metadata_jsons:
                 if json_file.name.startswith(file_name):
-                    with open(json_file, "r") as fh:
+                    with Path.open(json_file) as fh:
                         json_content = json.load(fh)
-                engine = json_content["Parser"].split("/")[-1].rstrip("_parser.py")
+                engine = json_content["Parser"].split("/")[-1].removesuffix("_parser.py")
                 if engine == "msfragger_4":
                     engine = "msfragger_4_2"
                 file_dict[str(file)].update(
@@ -118,10 +120,10 @@ class PeptideForest(urgap.unode.UNodeBase):
                         "engine": engine,
                         "score_col": json_content["validation_score_field"],
                         "bigger_score_better": json_content["bigger_scores_better"],
-                    }
+                    },
                 )
             data["input_files"].update(file_dict)
         config_path = utrace.output_files[0].path.parent / "config.json"
-        with open(config_path, "w") as fh:
+        with Path.open(config_path, "w") as fh:
             json.dump(data, fh)
         return config_path

@@ -3,7 +3,7 @@
 import argparse
 import multiprocessing as mp
 
-import peptide-forest 
+import peptide_forest
 
 if __name__ == "__main__":
     mp.freeze_support()
@@ -13,7 +13,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", dest="output", help="output file")
     args = parser.parse_args()
 
-    pf = peptide-forest.PeptideForest(
+    pf = peptide_forest.PeptideForest(
         config_path=args.config,
         output=args.output,
     )
