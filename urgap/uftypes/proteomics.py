@@ -39,6 +39,7 @@ proteomics.converter.PYIOHAT_JSON = ".pyiohat.json"
 proteomics.validator = types.SimpleNamespace()
 proteomics.validator.ANY = "proteomics.validator.ANY"
 proteomics.validator.PERCOLATOR_CSV = ".percolator.csv"
+proteomics.validator.COMBINEPEP_CSV = "combinepep.csv"
 proteomics.validator.PEPTIDEFOREST_CSV = ".peptideforest.csv"
 
 proteomics.quantification = types.SimpleNamespace()
