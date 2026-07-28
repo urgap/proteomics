@@ -14,12 +14,13 @@ proteomics.dbsearch.COMET_MZID = ".comet.mzid"
 proteomics.dbsearch.MASCOT_DAT = ".mascot.dat"
 proteomics.dbsearch.MSAMANDA_CSV = ".msamanda.csv"
 proteomics.dbsearch.MSFRAGGER_TSV = ".msfragger.tsv"
-proteomics.dbsearch.MSFRAGGER_PARAMS = ".msfragger.params"
 proteomics.dbsearch.MSGFPLUS_MZID = ".msgfplus.mzid"
 proteomics.dbsearch.OMSSA_CSV = ".omssa.csv"
 proteomics.dbsearch.XTANDEM_XML = ".xtandem.xml"
 proteomics.dbsearch.DIANN_QUANT = ".diann.quant"
 proteomics.dbsearch.DIANN_REPORT = ".diann_report.tsv"
+proteomics.dbsearch.SAGE_JSON = ".sage_report.tsv"
+
 
 proteomics.diannlibrary = types.SimpleNamespace()
 proteomics.diannlibrary.ANY = "proteomics.diannlibrary.ANY"
@@ -61,3 +62,8 @@ proteomics.quantification.reporter_ions.S2I_CORRECTED_REPORTER_IONS = (
 proteomics.qc = types.SimpleNamespace()
 proteomics.qc.ANY = "proteomics.qc.ANY"
 proteomics.qc.OFFSET_CSV = ".offset.csv"
+
+proteomics.params = types.SimpleNamespace()
+proteomics.params.ANY = ".msgfplus.params.ANY"
+proteomics.params.MSGFPLUS_TXT = ".msgfplus_params.txt"
+proteomics.params.SAGE_JSON = ".sage_params.json"
