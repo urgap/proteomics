@@ -1,14 +1,15 @@
 """Urgap sage wrapper."""
 
 
+import json
+
 import urgap
 
-import json
 
 class Sage(urgap.unode.UNodeBase):
     """Sage wrapper for the Sage search engine.
 
-    Sage is a proteomics database search engine - a tool that transforms raw mass spectra from 
+    Sage is a proteomics database search engine - a tool that transforms raw mass spectra from
     proteomics experiments into peptide identifications via database searching & spectral matching.
     """
 
@@ -27,7 +28,7 @@ class Sage(urgap.unode.UNodeBase):
         "output_uftypes": {
             urgap.uftypes.proteomics.dbsearch.SAGE_TSV: {"min": 1, "max": 1},
             urgap.uftypes.proteomics.params.SAGE_JSON: {"min": 0, "max": 1},
-            
+
         },
         "engine": None,
         "engine_type": ("identification",),
@@ -59,29 +60,20 @@ class Sage(urgap.unode.UNodeBase):
         params_dict = utrace.urun_dict.parameters[
             f"{self.META_INFO['name']}:{self.META_INFO['versions'][0]['version']}"
         ]
-        
+
         param_files = utrace.input_files.get_path_objects_by_uftype(
             urgap.uftypes.proteomics.params.SAGE_JSON,
         )
         param_file_provided = len(param_files) == 1
         cmdline_json_provided = "-json" in params_dict
-        
-          
-        if param_file_provided and cmdline_json_provided: 
-            raise ValueError(
-                "Both parameter and command-line parameter provided."
-                "Please only use one",
-            )
-        elif param_file_provided:
+
+
+        if param_file_provided:
             param_json_path = param_files[0]
         elif cmdline_json_provided:
             param_json_path = params_dict["-json"]
-        else:
-            raise ValueError(
-                "No parameters provided."
-                "Please provide parameters for Sage",
-            )            
-          
+
+
         mzml_file = utrace.input_files.get_path_objects_by_uftype(
             urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML,
         )[0]
@@ -98,7 +90,7 @@ class Sage(urgap.unode.UNodeBase):
         ]
         return utrace
 
-        
+
 
     def postflight(self, utrace: urgap.UTrace) -> urgap.UTrace:
         """Postflight routine for Sage wrapper.
@@ -115,13 +107,13 @@ class Sage(urgap.unode.UNodeBase):
         full_path = utrace.input_files.get_path_objects_by_uftype(
             urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML,
         )[0]
-        Sage_tsv = full_path.parent / "results.sage.tsv"
-        self.tmp_files.append(Sage_tsv)
+        sage_tsv = full_path.parent / "results.sage.tsv"
+        self.tmp_files.append(sage_tsv)
 
         with (
-            Sage_tsv.open() as fin,
+            sage_tsv.open() as fin,
             utrace.output_files[0].path.open("w") as fout,
-        ): 
+        ):
             for line in fin:
                 fout.write(line)
         return utrace
