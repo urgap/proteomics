@@ -21,12 +21,12 @@ class Sage(urgap.unode.UNodeBase):
         "parameters_not_triggering_rerun": [],
         "input_uftypes": {
             urgap.uftypes.ms.converter.mzml.THERMORAWPARSER_MZML: {"min": 0, "max": -1},
-            urgap.uftypes.proteomics.params.SAGE_JSON: {"min": 0, "max": 1},
-            urgap.uftypes.proteomics.FASTA: {"min": 1, "max": 1},
+            urgap.uftypes.proteomics.params.SAGE_JSON: {"min": 1, "max": 1},
+            urgap.uftypes.proteomics.FASTA: {"min": 0, "max": 1},
         },
         "output_uftypes": {
             urgap.uftypes.proteomics.dbsearch.SAGE_TSV: {"min": 1, "max": 1},
-#            urgap.uftypes.proteomics.dbsearch.SAGE_PARQUET: {"min": 0, "max": 1},
+            urgap.uftypes.proteomics.params.SAGE_JSON: {"min": 0, "max": 1},
             
         },
         "engine": None,
