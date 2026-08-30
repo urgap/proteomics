@@ -20,6 +20,8 @@ proteomics.dbsearch.OMSSA_CSV = ".omssa.csv"
 proteomics.dbsearch.XTANDEM_XML = ".xtandem.xml"
 proteomics.dbsearch.DIANN_QUANT = ".diann.quant"
 proteomics.dbsearch.DIANN_REPORT = ".diann_report.tsv"
+proteomics.dbsearch.SAGE_TSV = ".sage_report.tsv"
+proteomics.dbsearch.SAGE_JSON = ".sage_report.json"
 
 proteomics.diannlibrary = types.SimpleNamespace()
 proteomics.diannlibrary.ANY = "proteomics.diannlibrary.ANY"
@@ -61,3 +63,8 @@ proteomics.quantification.reporter_ions.S2I_CORRECTED_REPORTER_IONS = (
 proteomics.qc = types.SimpleNamespace()
 proteomics.qc.ANY = "proteomics.qc.ANY"
 proteomics.qc.OFFSET_CSV = ".offset.csv"
+
+proteomics.params = types.SimpleNamespace()
+proteomics.params.ANY = ".msgfplus.params.ANY"
+proteomics.params.MSGFPLUS_TXT = ".msgfplus_params.txt"
+proteomics.params.SAGE_JSON = ".sage.json"
