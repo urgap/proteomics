@@ -16,7 +16,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest",
-    "pytest-asyncio>=0.23",
+    "pytest-asyncio>=0.23.6",
     "urgap[dev]",
 ]
 
