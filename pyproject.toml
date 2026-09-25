@@ -11,12 +11,12 @@ dependencies = [
     "urgap",
     "pymzml>=2.5.0",
     "pyiohat>=1.9.0",
+    "pytest",
+    "pytest-asyncio>=0.23",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
-    "pytest-asyncio>=0.23",
     "urgap[all]",
 ]
 
