@@ -13,6 +13,8 @@ dependencies = [
     "pyiohat>=1.9.0",
     "pytest",
     "pytest-asyncio>=0.23",
+    "opentelemetry-api",
+    "opentelemetry-sdk",
 ]
 
 [project.optional-dependencies]
