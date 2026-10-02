@@ -15,6 +15,7 @@ dependencies = [
     "pytest-asyncio>=0.23",
     "opentelemetry-api",
     "opentelemetry-sdk",
+    "casanovo>=5.1.2"
 ]
 
 [project.optional-dependencies]
