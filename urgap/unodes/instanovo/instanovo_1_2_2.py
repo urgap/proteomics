@@ -30,7 +30,7 @@ class Instanovo(urgap.unode.UNodeBase):
             urgap.uftypes.proteomics.denovosearch.INSTANOVO_YAML: {"min": 0, "max": 1},
         },
         "output_uftypes": {
-            urgap.uftypes.proteomics.denovosearch.INSTANOVO_CSV : {"min": 1, "max": 1},
+            urgap.uftypes.proteomics.denovosearch.INSTANOVO_CSV: {"min": 1, "max": 1},
         },
         "engine": None,
         "engine_type": ("identification",),
@@ -120,20 +120,21 @@ class Instanovo(urgap.unode.UNodeBase):
             raise ValueError(msg)
 
         model_used = input_params.get("model_used")
-        if model_used is not None and model_used not in ["transformer", "diffusion"]:
+        if model_used not in ["transformer", "diffusion", "both"]:
             logging.error(
                 "Unknown search mode %s. Search mode has to be either "
-                "'transformer' or 'diffusion'",
+                "'transformer', 'diffusion' or 'both' ",
                 model_used,
             )
+            raise ValueError(f"Unknown search mode: {model_used}")
 
         utrace.urun_dict.command_list = [
             str(self.exe_path),
         ]
 
-        if model_used is not None:
-            utrace.urun_dict.command_list.append(f"{model_used}")
-
+        if model_used in ["transformer", "diffusion"]:
+            utrace.urun_dict.command_list.append(model_used)
+        # Instanovo has using both models as the default, so having both as the input for model used should leave tghat command blank
         utrace.urun_dict.command_list += [
             "predict",
             "--data-path",

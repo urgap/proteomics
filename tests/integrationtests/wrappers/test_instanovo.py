@@ -25,11 +25,11 @@ def test_instanovo_command_construction_yaml_no_model(tmp_path: Path) -> None:
         [
             urgap.UFile(
                 uri=f"file://{urgap._test_folder}/data?uftype="
-                f"{urgap.uftypes.proteomics.converter.PYMZML_MGF}#mgfs/BSA1.mgf",
+                f"{urgap.uftypes.proteomics.converter.PYMZML_MGF}#ms_files/BSA1.mgf",
             ),
             urgap.UFile(
                 uri=f"file://{urgap._test_folder}/data?uftype="
-                f"{urgap.uftypes.proteomics.denovosearch.INSTANOVO_YAML}#instanovo_params/default.yaml",
+                f"{urgap.uftypes.proteomics.denovosearch.INSTANOVO_YAML}#params/instanovo_default_params.yaml",
             ),
         ],
     )
@@ -48,8 +48,14 @@ def test_instanovo_command_construction_yaml_no_model(tmp_path: Path) -> None:
         tmp[unode]["resource_available"] = True
         return unode_obj, tmp
 
-    with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
-        with patch("urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.exe_path", new_callable=PropertyMock) as mock_exe:
+    with patch(
+        "urgap.unode_manager.UNodeManager.check_unode_dependencies",
+        new=mock_check_dependencies,
+    ):
+        with patch(
+            "urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.exe_path",
+            new_callable=PropertyMock,
+        ) as mock_exe:
             mock_exe.return_value = Path("instanovo")
             with patch(
                 "urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.find_instanovo_configs",
@@ -75,7 +81,7 @@ def test_instanovo_command_construction_yaml_no_model(tmp_path: Path) -> None:
     assert actual_cmd[4] == "--output-path"
     assert actual_cmd[6] == "--config-path"
     assert actual_cmd[8] == "--config-name"
-    assert actual_cmd[9] == "default"
+    assert actual_cmd[9] == "instanovo_default_params"
     assert len(actual_cmd) == 10
 
     original_check_deps = urgap.unode_manager.UNodeManager.check_unode_dependencies
@@ -85,8 +91,14 @@ def test_instanovo_command_construction_yaml_no_model(tmp_path: Path) -> None:
         tmp[unode]["resource_available"] = True
         return unode_obj, tmp
 
-    with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
-        with patch("urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.exe_path", new_callable=PropertyMock) as mock_exe:
+    with patch(
+        "urgap.unode_manager.UNodeManager.check_unode_dependencies",
+        new=mock_check_dependencies,
+    ):
+        with patch(
+            "urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.exe_path",
+            new_callable=PropertyMock,
+        ) as mock_exe:
             mock_exe.return_value = Path("instanovo")
             with patch(
                 "urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.find_instanovo_configs",
@@ -109,11 +121,13 @@ def test_instanovo_command_construction_yaml_no_model(tmp_path: Path) -> None:
     assert actual_cmd[4] == "--output-path"
     assert actual_cmd[6] == "--config-path"
     assert actual_cmd[8] == "--config-name"
-    assert actual_cmd[9] == "default"
+    assert actual_cmd[9] == "instanovo_default_params"
     assert len(actual_cmd) == 10
 
 
-def test_instanovo_command_construction_with_model_and_cli_params(tmp_path: Path) -> None:
+def test_instanovo_command_construction_with_model_and_cli_params(
+    tmp_path: Path,
+) -> None:
     """Test that command_list includes model_used and CLI overrides when no yaml file is provided."""
     urun_dict = urgap.URunDict(
         {
@@ -133,7 +147,7 @@ def test_instanovo_command_construction_with_model_and_cli_params(tmp_path: Path
         [
             urgap.UFile(
                 uri=f"file://{urgap._test_folder}/data?uftype="
-                f"{urgap.uftypes.proteomics.converter.PYMZML_MGF}#mgfs/BSA1.mgf",
+                f"{urgap.uftypes.proteomics.converter.PYMZML_MGF}#ms_files/BSA1.mgf",
             ),
         ],
     )
@@ -146,9 +160,15 @@ def test_instanovo_command_construction_with_model_and_cli_params(tmp_path: Path
         return unode_obj, tmp
 
     # 1. Patch the manager dependency check to pretend the file exists
-    with patch("urgap.unode_manager.UNodeManager.check_unode_dependencies", new=mock_check_dependencies):
+    with patch(
+        "urgap.unode_manager.UNodeManager.check_unode_dependencies",
+        new=mock_check_dependencies,
+    ):
         # 2. Patch the class property directly on the class definition to bypass read-only restrictions
-        with patch("urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.exe_path", new_callable=PropertyMock) as mock_exe:
+        with patch(
+            "urgap.unodes.instanovo.instanovo_1_2_2.Instanovo.exe_path",
+            new_callable=PropertyMock,
+        ) as mock_exe:
             mock_exe.return_value = Path("instanovo")
             instanovo_node = urgap.init_node("Instanovo:1.2.2")
 
@@ -189,7 +209,7 @@ def test_instanovo_invalid_model_used_logs_error(tmp_path: Path, caplog) -> None
         [
             urgap.UFile(
                 uri=f"file://{urgap._test_folder}/data?uftype="
-                f"{urgap.uftypes.proteomics.converter.PYMZML_MGF}#mgfs/BSA1.mgf",
+                f"{urgap.uftypes.proteomics.converter.PYMZML_MGF}#ms_files/BSA1.mgf",
             ),
         ],
     )
@@ -225,11 +245,11 @@ def test_instanovo_param_file_and_cli_params_raises(tmp_path: Path) -> None:
         [
             urgap.UFile(
                 uri=f"file://{urgap._test_folder}/data?uftype="
-                f"{urgap.uftypes.proteomics.converter.PYMZML_MGF}#mgfs/BSA1.mgf",
+                f"{urgap.uftypes.proteomics.converter.PYMZML_MGF}#ms_files/BSA1.mgf",
             ),
             urgap.UFile(
                 uri=f"file://{urgap._test_folder}/data?uftype="
-                f"{urgap.uftypes.proteomics.denovosearch.INSTANOVO_YAML}#instanovo_params/default.yaml",
+                f"{urgap.uftypes.proteomics.denovosearch.INSTANOVO_YAML}#params/instanovo_default_params.yaml",
             ),
         ],
     )
