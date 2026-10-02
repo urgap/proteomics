@@ -6,19 +6,21 @@ build-backend = "hatchling.build"
 name = "urgap-proteomics"
 version = "0.0.1"
 description = "Urgap proteomics specific extension"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
-    "urgap[all]",
+    "urgap",
     "pymzml>=2.5.0",
     "pyiohat>=1.9.0",
+    "pytest",
+    "pytest-asyncio>=0.23",
+    "opentelemetry-api",
+    "opentelemetry-sdk",
     "casanovo>=5.1.2"
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
-    "pytest-asyncio>=0.23",
-    "urgap[dev]",
+    "urgap[all]",
 ]
 
 
@@ -41,6 +43,8 @@ select = ["ALL"]
 ignore = [
     "S", # Flake8 Bandit
     "E501", # Line too long
+    "CPY001", # Missing copyright notice at top of file (Put back later)
+    "PLR0917", # Too many positional arguments (Put back later) 
     "PLR2004", # Magic value comparison
     "RUF012", # Mutable class default
     "LOG015", # Root logger call
