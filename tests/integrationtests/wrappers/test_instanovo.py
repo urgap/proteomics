@@ -1,6 +1,5 @@
 """Integration test for Instanovo."""
 
-import logging
 from pathlib import Path
 from unittest.mock import patch, PropertyMock
 
@@ -13,7 +12,7 @@ def test_instanovo_command_construction_yaml_no_model(tmp_path: Path) -> None:
     urun_dict = urgap.URunDict(
         {
             "parameters": {
-                "Instanovo:1.2.2": {},
+                "Instanovo:1.2.2": {"model_used": "both"},
             },
             "unode_parameters": {
                 "storage_base_uri": f"file://{tmp_path}",
@@ -216,13 +215,8 @@ def test_instanovo_invalid_model_used_logs_error(tmp_path: Path, caplog) -> None
 
     instanovo_node = urgap.init_node("Instanovo:1.2.2")
 
-    with patch("subprocess.run") as mock_run:
-        mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = ""
-        with caplog.at_level(logging.ERROR), pytest.raises(FileNotFoundError):
-            instanovo_node.run(ufiles, urun_dict)
-
-    assert "Unknown search mode" in caplog.text
+    with pytest.raises(ValueError, match="Unknown search mode"):
+        instanovo_node.run(ufiles, urun_dict)
 
 
 def test_instanovo_param_file_and_cli_params_raises(tmp_path: Path) -> None:
