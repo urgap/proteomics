@@ -121,12 +121,11 @@ class Instanovo(urgap.unode.UNodeBase):
 
         model_used = input_params.get("model_used")
         if model_used not in ["transformer", "diffusion", "both"]:
-            logging.error(
-                "Unknown search mode %s. Search mode has to be either "
-                "'transformer', 'diffusion' or 'both' ",
-                model_used,
+            msg = (
+                f"Unknown search mode {model_used!r}. Search mode has to be "
+                "either 'transformer', 'diffusion' or 'both'."
             )
-            raise ValueError(f"Unknown search mode: {model_used}")
+            raise ValueError(msg)
 
         utrace.urun_dict.command_list = [
             str(self.exe_path),
