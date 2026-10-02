@@ -1,7 +1,6 @@
 """Urgap Instanovo_1_2_2 wrapper."""
 
 import importlib.util
-import logging
 import os
 import sys
 
