@@ -9,6 +9,10 @@ description = "Urgap proteomics specific extension"
 requires-python = ">=3.10"
 dependencies = [
     "urgap",
+    "numpy>=1.26,<2.0",
+    "pandas>2.0.0,<2.1.0",
+    "simepy>=0.3.2",
+    "urgap",
     "pymzml>=2.5.0",
     "pyiohat>=1.9.0",
     "pytest",
