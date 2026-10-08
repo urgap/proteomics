@@ -29,5 +29,5 @@ ms.converter = types.SimpleNamespace()
 ms.converter.ANY = "ms.converter.ANY"
 ms.converter.mzml = types.SimpleNamespace()
 ms.converter.mzml.ANY = "ms.converter.mzml.ANY"
-ms.converter.mzml.THERMORAWPARSER_MZML = ".thermorawparser.mzML"
+ms.converter.mzml.THERMORAWPARSER_MZML = ".thermorawparser.mzml"
 ms.converter.mzml.PYMZML_IDXGZ = ".pymzml_idx.gz"
