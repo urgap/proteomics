@@ -1,5 +1,6 @@
 """urgap percolator_3_7_1 wrapper."""
 
+import json
 import os
 import shutil
 
@@ -16,6 +17,10 @@ import urgap
 
 class PercolatorEngineMismatchError(Exception):
     """Raised when input PSMs originate from more than one search engine."""
+
+
+class PercolatorScoreConfigError(Exception):
+    """Raised when the pyiohat json score settings are missing or inconsistent."""
 
 
 def _apply_parallel(
@@ -58,6 +63,10 @@ class Percolator(urgap.unode.UNodeBase):
         "parameters_not_triggering_rerun": [],
         "input_uftypes": {
             urgap.uftypes.proteomics.converter.PYIOHAT_CSV: {
+                "min": 1,
+                "max": -1,
+            },
+            urgap.uftypes.proteomics.converter.PYIOHAT_JSON: {
                 "min": 1,
                 "max": -1,
             },
@@ -175,16 +184,22 @@ class Percolator(urgap.unode.UNodeBase):
         unified_df = pd.read_csv(self.merged_frame)
 
         final_df = unified_df.merge(
-            qvals, left_on="PSMId", right_on="PSMId", how="left",
+            qvals,
+            left_on="PSMId",
+            right_on="PSMId",
+            how="left",
         )
         final_df = final_df[~final_df["q-value"].isna()]
         idx = self.output_type_dict[".percolator.csv"][0]
         final_df.to_csv(utrace.output_files[idx].path)
 
         # Part specific for only version 3.7.1
-        if self.META_INFO["unode_version"] == "3.7.1" and (
-            utrace.output_files[0].path.parent / "target_protein_qvals.tsv"
-        ).exists():
+        if (
+            self.META_INFO["unode_version"] == "3.7.1"
+            and (
+                utrace.output_files[0].path.parent / "target_protein_qvals.tsv"
+            ).exists()
+        ):
             utrace.extend_output_files_by_uftype(
                 urgap.uftypes.proteomics.validator.PERCOLATOR_CSV,
             )
@@ -215,8 +230,10 @@ class Percolator(urgap.unode.UNodeBase):
     ) -> urgap.UTrace:
         """Create the command list to execute percolator executable.
 
-        Based on the input parameters, the command list is created, which will be used
-        during execute step to run percolator.
+        Every parameter in the urun_dict is appended to the command line as
+        ``--<key>``. Keys must therefore be exact percolator long-option names
+        (without the leading dashes). Boolean True adds the bare flag, False and
+        None add nothing, and any other value is appended after the flag.
 
         Args:
             utrace: Combination of urun_dict, ufile_list and unode.meta.
@@ -224,21 +241,12 @@ class Percolator(urgap.unode.UNodeBase):
         Returns:
             UTrace object, combination of urun_dict, ufile_list and unode.meta.
         """
-        # Percolator-specific mapping from internal param name -> CLI flag.
-        # Extend this as new percolator params are supported.
-        cli_flag_map = {
-            "infer_proteins": "--picked-protein",
-            "percolator_post_processing": None,  # positional, handled below
-        }
-
         params_dict = utrace.urun_dict.parameters[
             f"{self.META_INFO['unode_full_identifier']}"
         ]
 
-        # Params consumed elsewhere (create_input_file) or not CLI-relevant.
+        # Params consumed by the wrapper itself (create_input_file), not percolator.
         skip_keys = {
-            "bigger_scores_better",
-            "validation_score_field",
             "delimiter",
             "enzyme",
             "database",
@@ -246,41 +254,12 @@ class Percolator(urgap.unode.UNodeBase):
         }
 
         for key, value in params_dict.items():
-            if key in skip_keys:
+            if key in skip_keys or value is False or value is None:
                 continue
 
-            if key == "infer_proteins":
-                if value is True:
-                    utrace.urun_dict.command_list.append(cli_flag_map["infer_proteins"])
-                    utrace.urun_dict.command_list.append(utrace.input_files[1].path)
-
-                    target_proteins = (
-                        utrace.output_files[0].path.parent / "target_protein_qvals.tsv"
-                    )
-                    decoy_proteins = (
-                        utrace.output_files[0].path.parent / "decoy_protein_qvals.tsv"
-                    )
-
-                    utrace.urun_dict.command_list.append("-l")
-                    utrace.urun_dict.command_list.append(f"{target_proteins}")
-                    utrace.urun_dict.command_list.append("-L")
-                    utrace.urun_dict.command_list.append(f"{decoy_proteins}")
-                continue
-
-            if key == "percolator_post_processing":
-                if value is not None:
-                    utrace.urun_dict.command_list.append(value)
-                continue
-
-            if value is True:
-                flag = cli_flag_map.get(key, f"--{key}")
-                utrace.urun_dict.command_list.append(flag)
-            elif value is False or value is None:
-                continue
-            else:
-                flag = cli_flag_map.get(key, f"--{key}")
-                utrace.urun_dict.command_list.append(flag)
-                utrace.urun_dict.command_list.append(value)
+            utrace.urun_dict.command_list.append(f"--{key}")
+            if value is not True:
+                utrace.urun_dict.command_list.append(str(value))
 
         return utrace
 
@@ -319,6 +298,46 @@ class Percolator(urgap.unode.UNodeBase):
 
         return df, old_columns, params_dict, delimiter
 
+    def _load_score_config(self, utrace: urgap.UTrace) -> tuple[bool, str]:
+        """Read score settings from the pyiohat json file(s).
+
+        Args:
+            utrace: Combination of urun_dict, ufile_list and unode.meta.
+
+        Returns:
+            Tuple of (bigger_scores_better, validation_score_field).
+
+        Raises:
+            PercolatorScoreConfigError: If a json file lacks a required key, or
+                the json files disagree on the score settings.
+        """
+        required_keys = {"bigger_scores_better", "validation_score_field"}
+        json_files = utrace.input_files.get_path_objects_by_uftype(
+            urgap.uftypes.proteomics.converter.PYIOHAT_JSON,
+        )
+
+        configs = set()
+        for json_file in json_files:
+            with Path(json_file).open() as fin:
+                meta = json.load(fin)
+            missing = required_keys - meta.keys()
+            if missing:
+                msg = f"{json_file} is missing required keys: {sorted(missing)}"
+                raise PercolatorScoreConfigError(msg)
+            configs.add(
+                (meta["bigger_scores_better"], meta["validation_score_field"]),
+            )
+
+        if len(configs) != 1:
+            msg = (
+                "Expected exactly one consistent set of "
+                "(bigger_scores_better, validation_score_field) across the "
+                f"pyiohat json files, found: {sorted(configs, key=str)}"
+            )
+            raise PercolatorScoreConfigError(msg)
+
+        return configs.pop()
+
     def _add_charge_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """One-hot encode charge states and derive charge-dependent features.
 
@@ -350,12 +369,15 @@ class Percolator(urgap.unode.UNodeBase):
         self,
         df: pd.DataFrame,
         params_dict: dict,
+        score_config: tuple[bool, str],
     ) -> pd.DataFrame:
         """Compute score, rank, delta-score, and enzyme-derived features.
 
         Args:
             df: PSM dataframe with charge features already added.
             params_dict: Node parameters for this percolator run.
+            score_config: Tuple of (bigger_scores_better, validation_score_field)
+                read from the pyiohat json file(s).
 
         Returns:
             Dataframe with score, rank, delta score, and enzyme features added.
@@ -363,13 +385,11 @@ class Percolator(urgap.unode.UNodeBase):
         if len(df["search_engine"].unique()) != 1:
             msg = "Multiple engines detected in dataframe. Percolator can only handle one search engine at a time."
             raise PercolatorEngineMismatchError(msg)
-        se = df["search_engine"].iloc[0]
 
-        bigger_scores_better = params_dict["bigger_scores_better"][se]
-        validate_score_field = params_dict["validation_score_field"][se]
+        bigger_scores_better, validation_score_field = score_config
 
-        df["score"] = df[validate_score_field]
-        if bigger_scores_better is False:
+        df["score"] = df[validation_score_field]
+        if not bigger_scores_better:
             df["score"] = -np.log10(df["score"])
 
         df["sp"] = df["score"].rank(method="max")
@@ -377,7 +397,9 @@ class Percolator(urgap.unode.UNodeBase):
 
         threads = params_dict.get("cpus", 1)
         df = _apply_parallel(
-            df.groupby("spectrum_id"), self.delta_score, threads=threads,
+            df.groupby("spectrum_id"),
+            self.delta_score,
+            threads=threads,
         ).reset_index(drop=True)
 
         df["enzn"] = df["enzn"].astype(int)
@@ -402,12 +424,18 @@ class Percolator(urgap.unode.UNodeBase):
         df["modifications"] = df["modifications"].fillna("")
         df.loc[df["modifications"] == "", "Peptide"] = (
             df["sequence_pre_aa"].str.split(delimiter).str[0]
-            + "." + df["sequence"] + "."
+            + "."
+            + df["sequence"]
+            + "."
             + df["sequence_post_aa"].str.split(delimiter).str[0]
         )
         df.loc[df["modifications"] != "", "Peptide"] = (
             df["sequence_pre_aa"].str.split(delimiter).str[0]
-            + "." + df["sequence"] + "[#" + df["modifications"] + "]."
+            + "."
+            + df["sequence"]
+            + "[#"
+            + df["modifications"]
+            + "]."
             + df["sequence_post_aa"].str.split(delimiter).str[0]
         )
 
@@ -432,11 +460,33 @@ class Percolator(urgap.unode.UNodeBase):
             Path to the generated percolator input tsv file.
         """
         features = [
-            "PSMId", "Label", "ScanNr", "lnrsp", "deltlcn", "deltcn",
-            "score", "sp", "mass", "peplen",
-            "charge_1", "charge_2", "charge_3", "charge_4", "charge_5",
-            "charge_6", "charge_7", "charge_8", "charge_9", "charge_10",
-            "enzn", "enzc", "enzint", "dm", "absdm", "Peptide", "Proteins",
+            "PSMId",
+            "Label",
+            "ScanNr",
+            "lnrsp",
+            "deltlcn",
+            "deltcn",
+            "score",
+            "sp",
+            "mass",
+            "peplen",
+            "charge_1",
+            "charge_2",
+            "charge_3",
+            "charge_4",
+            "charge_5",
+            "charge_6",
+            "charge_7",
+            "charge_8",
+            "charge_9",
+            "charge_10",
+            "enzn",
+            "enzc",
+            "enzint",
+            "dm",
+            "absdm",
+            "Peptide",
+            "Proteins",
         ]
 
         df = df.reset_index()
@@ -472,8 +522,9 @@ class Percolator(urgap.unode.UNodeBase):
             Path to input file.
         """
         df, old_columns, params_dict, delimiter = self._load_input_dataframe(utrace)
+        score_config = self._load_score_config(utrace)
         df = self._add_charge_features(df)
-        df = self._add_mass_and_delta_features(df, params_dict)
+        df = self._add_mass_and_delta_features(df, params_dict, score_config)
         df = self._add_peptide_and_protein_columns(df, delimiter)
         return self._write_feature_file(df, old_columns, utrace)
 
