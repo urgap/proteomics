@@ -14,6 +14,7 @@ proteomics.dbsearch.COMET_MZID = ".comet.mzid"
 proteomics.dbsearch.MASCOT_DAT = ".mascot.dat"
 proteomics.dbsearch.MSAMANDA_CSV = ".msamanda.csv"
 proteomics.dbsearch.MSFRAGGER_TSV = ".msfragger.tsv"
+proteomics.dbsearch.MSFRAGGER_PARAMS = ".msfragger.params"
 proteomics.dbsearch.MSGFPLUS_MZID = ".msgfplus.mzid"
 proteomics.dbsearch.OMSSA_CSV = ".omssa.csv"
 proteomics.dbsearch.XTANDEM_XML = ".xtandem.xml"
@@ -27,6 +28,10 @@ proteomics.diannlibrary.DIANN_EMPIRICIAL_LIBRARY = ".diann_emperical.speclib"
 
 proteomics.denovosearch = types.SimpleNamespace()
 proteomics.denovosearch.NOVOR_CSV = ".novor.csv"
+proteomics.denovosearch.INSTANOVO_YAML = ".instanovo.yaml"
+proteomics.denovosearch.INSTANOVO_CSV = ".instanovo.csv"
+proteomics.denovosearch.CASANOVO_YAML = ".casanovo.yaml"
+proteomics.denovosearch.CASANOVO_MZTAB = ".casanovo.mztab"
 
 proteomics.converter = types.SimpleNamespace()
 proteomics.converter.ANY = "proteomics.converter.ANY"
