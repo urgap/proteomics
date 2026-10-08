@@ -18,6 +18,7 @@ proteomics.dbsearch.MSFRAGGER_PARAMS = ".msfragger.params"
 proteomics.dbsearch.MSGFPLUS_MZID = ".msgfplus.mzid"
 proteomics.dbsearch.OMSSA_CSV = ".omssa.csv"
 proteomics.dbsearch.XTANDEM_XML = ".xtandem.xml"
+proteomics.dbsearch.XTANDEM_PARAMS = ".xtandem.params"
 proteomics.dbsearch.DIANN_QUANT = ".diann.quant"
 proteomics.dbsearch.DIANN_REPORT = ".diann_report.tsv"
 
