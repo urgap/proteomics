@@ -20,6 +20,8 @@ proteomics.dbsearch.OMSSA_CSV = ".omssa.csv"
 proteomics.dbsearch.XTANDEM_XML = ".xtandem.xml"
 proteomics.dbsearch.DIANN_QUANT = ".diann.quant"
 proteomics.dbsearch.DIANN_REPORT = ".diann_report.tsv"
+proteomics.dbsearch.SAGE_TSV = ".sage_report.tsv"
+proteomics.dbsearch.SAGE_JSON = ".sage_report.json"
 
 proteomics.diannlibrary = types.SimpleNamespace()
 proteomics.diannlibrary.ANY = "proteomics.diannlibrary.ANY"
