@@ -1,8 +1,9 @@
 """Urgap sage wrapper."""
 
 import json
-import os
+
 from pathlib import Path
+
 import urgap
 
 
@@ -55,7 +56,6 @@ class Sage(urgap.unode.UNodeBase):
             ValueError: If both a parameter file and command-line parameters
                 in the urun_dict are provided. Please provide only one.
         """
-
         param_files = utrace.input_files.get_path_objects_by_uftype(
             urgap.uftypes.proteomics.params.SAGE_JSON,
         )
@@ -66,7 +66,7 @@ class Sage(urgap.unode.UNodeBase):
         fasta_file = utrace.input_files.get_path_objects_by_uftype(
             urgap.uftypes.proteomics.FASTA,
         )[0]
-        
+
         config_dict = json.loads(param_files[0].read_text())
         config_dict["output_directory"] = str(mzml_file.parent)
 
