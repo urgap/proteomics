@@ -31,7 +31,7 @@ class Sage(urgap.unode.UNodeBase):
 
         },
         "engine": None,
-        "engine_type": ("identification",),
+        "engine_type": ("db_search", "proteomics"),
         "citation": """Lazear, M. R. (2023). Sage: An open-source tool for fast proteomics searching and quantification at scale. Journal of Proteome Research, 22(11), 3652-3659. https://doi.org/10.1021/acs.jproteome.3c00486""",
     }
 
