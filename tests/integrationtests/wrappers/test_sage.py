@@ -7,8 +7,8 @@ import pytest
 
 
 def test_searchdb_sage(tmp_path: Path) -> None:
-    params = urgap.UFile(uri=f"file:///{urgap._test_folder}/data/params?uftype={urgap.uftypes.proteomics.params.SAGE_JSON}#sage_config.json")
-    params_alt = urgap.UFile(uri=f"file:///{urgap._test_folder}/data/params?uftype={urgap.uftypes.proteomics.params.SAGE_JSON}#sage_config_alternate.json")
+    params = urgap.UFile(uri=f"file:///{urgap._test_folder}/data/params?uftype={urgap.uftypes.proteomics.dbsearch.SAGE_PARAMS}#sage_config.json")
+    params_alt = urgap.UFile(uri=f"file:///{urgap._test_folder}/data/params?uftype={urgap.uftypes.proteomics.dbsearch.SAGE_PARAMS}#sage_config_alternate.json")
     mzml = urgap.UFile(uri=f"file:///{urgap._test_folder}/data/ms_files?uftype={urgap.uftypes.ms.converter.mzml.ANY}#BSA1.mzML")
     fasta = urgap.UFile(uri=f"file:///{urgap._test_folder}/data/fastas?uftype={urgap.uftypes.proteomics.FASTA}#BSA1.fasta")
     urd = urgap.URunDict(
