@@ -57,7 +57,7 @@ class Sage(urgap.unode.UNodeBase):
                 in the urun_dict are provided. Please provide only one.
         """
         param_files = utrace.input_files.get_path_objects_by_uftype(
-            urgap.uftypes.proteomics.params.SAGE_JSON,
+            urgap.uftypes.proteomics.dbsearch.SAGE_PARAMS,
         )
 
         mzml_file = utrace.input_files.get_path_objects_by_uftype(
