@@ -1,17 +1,25 @@
+"""Tests for the Percolator:3.7.1 unode."""
+
 from pathlib import Path
+
+import pandas as pd
+
 import urgap
 
-def test_wrapper_percolator_3_7_1_simple(tmp_dir: Path) -> None:
-    """Test that Percolator successfully processes unified CSVs and infers proteins."""
+
+def test_wrapper_percolator_3_7_1_concatenated(tmp_dir: Path) -> None:
+    """Test that search-input concatenated gives the concatenated-specific result."""
     ufiles = urgap.UFileList(
         [
             urgap.UFile(
                 uri=f"file://{urgap._test_folder}/data?uftype="
-                f"{urgap.uftypes.proteomics.converter.PYIOHAT_CSV}#unified_csvs/human_ecoli_sample_pyiohat.csv"
+                f"{urgap.uftypes.proteomics.converter.PYIOHAT_CSV}"
+                "#pyiohat_data/pyiohat.csv",
             ),
             urgap.UFile(
                 uri=f"file://{urgap._test_folder}/data?uftype="
-                f"{urgap.uftypes.proteomics.FASTA}#fastas/BSA1.fasta",
+                f"{urgap.uftypes.proteomics.converter.PYIOHAT_JSON}"
+                "#pyiohat_data/pyiohat_results.json",
             ),
         ],
     )
@@ -19,13 +27,10 @@ def test_wrapper_percolator_3_7_1_simple(tmp_dir: Path) -> None:
     urun_dict = urgap.URunDict(
         {
             "parameters": {
-                # Nesting parameters under the node identifier to match the new style
-            "Percolator:3.7.1": {
-                "infer_proteins": True,
-                "delimiter": "<|>",
-                "bigger_scores_better": {"omssa_2_1_9": False},
-                "validation_score_field": {"omssa_2_1_9": "omssa:evalue"},
-            },
+                "Percolator:3.7.1": {
+                    "delimiter": "<|>",
+                    "search-input": "concatenated",
+                },
             },
             "unode_parameters": {
                 "storage_base_uri": f"file://{tmp_dir}",
@@ -33,19 +38,70 @@ def test_wrapper_percolator_3_7_1_simple(tmp_dir: Path) -> None:
             },
         },
     )
-
-    # Note: If your registry still uses underscores, change this to "percolator_3_7_1"
-    node = urgap.init_node("Percolator:3.7.1")
-    
+    node = urgap.init_unode("Percolator:3.7.1")
     output_files = node.run(
         ufiles,
         urun_dict,
     )
-
-    # Verify the output target file was created
     assert output_files[0].path.exists() is True
-    
-    # Read the file to ensure content was generated
-    with output_files[0].path.open() as test_file:
-        lines = list(test_file)
-        assert len(lines) > 0  # Swap with an exact line check once you know the target coun
+    df = pd.read_csv(output_files[0].path, index_col=0)
+
+    assert len(df) > 1
+    assert "q-value" in df.columns
+    assert "posterior_error_prob" in df.columns
+
+    # concatenated-specific: the PEP distribution reaches 1.0
+    # (separate tops out at ~0.918)
+    assert df["posterior_error_prob"].max() >= 0.999
+    # concatenated-specific: exact count of PSMs at 1% FDR (separate: 15346)
+    assert (df["q-value"] <= 0.01).sum() == 1398
+
+
+def test_wrapper_percolator_3_7_1_separate(tmp_dir: Path) -> None:
+    """Test that search-input separate gives the separate-specific result."""
+    ufiles = urgap.UFileList(
+        [
+            urgap.UFile(
+                uri=f"file://{urgap._test_folder}/data?uftype="
+                f"{urgap.uftypes.proteomics.converter.PYIOHAT_CSV}"
+                "#pyiohat_data/pyiohat.csv",
+            ),
+            urgap.UFile(
+                uri=f"file://{urgap._test_folder}/data?uftype="
+                f"{urgap.uftypes.proteomics.converter.PYIOHAT_JSON}"
+                "#pyiohat_data/pyiohat_results.json",
+            ),
+        ],
+    )
+
+    urun_dict = urgap.URunDict(
+        {
+            "parameters": {
+                "Percolator:3.7.1": {
+                    "delimiter": "<|>",
+                    "search-input": "separate",
+                },
+            },
+            "unode_parameters": {
+                "storage_base_uri": f"file://{tmp_dir}",
+                "remove_temporary_files": False,
+            },
+        },
+    )
+    node = urgap.init_unode("Percolator:3.7.1")
+    output_files = node.run(
+        ufiles,
+        urun_dict,
+    )
+    assert output_files[0].path.exists() is True
+    df = pd.read_csv(output_files[0].path, index_col=0)
+
+    assert len(df) > 1
+    assert "q-value" in df.columns
+    assert "posterior_error_prob" in df.columns
+
+    # separate-specific: the PEP distribution never reaches 1.0
+    # (concatenated hits 1.0)
+    assert df["posterior_error_prob"].max() < 0.95
+    # separate-specific: exact count of PSMs at 1% FDR (concatenated: 15328)
+    assert (df["q-value"] <= 0.01).sum() == 1420
