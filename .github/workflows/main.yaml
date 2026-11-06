@@ -10,7 +10,7 @@ on:
       - main
 jobs:
   code-quality:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -68,12 +68,8 @@ jobs:
         run: java -version
       - name: Install Mono
         run: |
-          sudo apt update
-          sudo apt install -y dirmngr gnupg apt-transport-https ca-certificates
-          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
-          echo "deb https://download.mono-project.com/repo/ubuntu stable-focal main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
-          sudo apt update
-          sudo apt install -y mono-complete
+          sudo apt-get update
+          sudo apt-get install -y mono-complete
       - name: Verify Mono installation
         run: mono --version
       - name: Run integration tests
