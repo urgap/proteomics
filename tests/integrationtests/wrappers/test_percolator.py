@@ -8,7 +8,7 @@ import urgap
 
 
 def test_wrapper_percolator_3_7_1_concatenated(tmp_dir: Path) -> None:
-    """Test that search-input concatenated gives the concatenated-specific result."""
+    """Test using a concatenated search-input (referring to the target-decoy database)."""
     ufiles = urgap.UFileList(
         [
             urgap.UFile(
@@ -58,7 +58,7 @@ def test_wrapper_percolator_3_7_1_concatenated(tmp_dir: Path) -> None:
 
 
 def test_wrapper_percolator_3_7_1_separate(tmp_dir: Path) -> None:
-    """Test that search-input separate gives the separate-specific result."""
+    """Test using separate as search input resulting in different q-values and PEP."""
     ufiles = urgap.UFileList(
         [
             urgap.UFile(
