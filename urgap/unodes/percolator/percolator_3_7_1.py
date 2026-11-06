@@ -456,6 +456,7 @@ class Percolator(urgap.unode.UNodeBase):
             df: Fully-featured PSM dataframe.
             old_columns: Column names from the original input dataframe(s).
             utrace: Combination of urun_dict, ufile_list and unode.meta.
+            delimiter: Delimiter used to split proteins for non-proteotypic peptides.
 
         Returns:
             Path to the generated percolator input tsv file.
