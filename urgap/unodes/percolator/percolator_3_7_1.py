@@ -497,7 +497,7 @@ class Percolator(urgap.unode.UNodeBase):
         self.tmp_files.append(fname)
         feature_df = feature_df.sort_values("ScanNr")
         feature_df["Proteins"] = (
-            feature_df["Proteins"].str.split(r"<\|>").str.join("\t")
+            feature_df["Proteins"].str.split(delimiter).str.join("\t")
         )
 
         feature_df.to_csv(fname, sep="\t", index=False)
