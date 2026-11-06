@@ -30,7 +30,7 @@
 	<note type="input" label="residue, potential modification mass">16@M</note>
 
 <note type="heading">Protein general</note>
-	<note type="input" label="protein, taxon">human</note>
+	<note type="input" label="protein, taxon">Haloferax volcanii</note>
 	<note type="input" label="protein, cleavage site">[RK]|{P}</note>
 	<note type="input" label="protein, cleavage C-terminal mass change">+17.00305</note>
 	<note type="input" label="protein, cleavage N-terminal mass change">+1.00794</note>
