@@ -448,6 +448,7 @@ class Percolator(urgap.unode.UNodeBase):
         df: pd.DataFrame,
         old_columns: object,
         utrace: urgap.UTrace,
+        delimiter: str,
     ) -> os.PathLike:
         """Write the percolator input tsv and the target/decoy merge frame.
 
@@ -526,7 +527,7 @@ class Percolator(urgap.unode.UNodeBase):
         df = self._add_charge_features(df)
         df = self._add_mass_and_delta_features(df, params_dict, score_config)
         df = self._add_peptide_and_protein_columns(df, delimiter)
-        return self._write_feature_file(df, old_columns, utrace)
+        return self._write_feature_file(df, old_columns, utrace, delimiter)
 
     def remove_quotes(self, file: os.PathLike) -> None:
         """Remove quotes from each line within the input file.
