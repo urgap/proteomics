@@ -30,7 +30,8 @@ proteomics.denovosearch = types.SimpleNamespace()
 proteomics.denovosearch.NOVOR_CSV = ".novor.csv"
 proteomics.denovosearch.INSTANOVO_YAML = ".instanovo.yaml"
 proteomics.denovosearch.INSTANOVO_CSV = ".instanovo.csv"
-
+proteomics.denovosearch.CASANOVO_YAML = ".casanovo.yaml"
+proteomics.denovosearch.CASANOVO_MZTAB = ".casanovo.mztab"
 
 proteomics.converter = types.SimpleNamespace()
 proteomics.converter.ANY = "proteomics.converter.ANY"
