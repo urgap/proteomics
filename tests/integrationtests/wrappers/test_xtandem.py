@@ -63,7 +63,7 @@ def test_searchdb_xtandem_alanine__non_default_params(tmp_path: Path) -> None:
         for group in model_groups
         for domain in group.iter("domain")
     }
-    assert "ECCDKPLLEK" not in sequences
+    assert "AWSVAR" in sequences
 
 
 
