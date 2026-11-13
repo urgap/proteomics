@@ -1,0 +1,12 @@
+{
+  "File Origin": "Casanovo",
+  "Parser": "pyiohat/parsers/de_novo/casanovo_5_2_parser.py",
+  "Version": [
+    4.0,
+    4.1,
+    4.2,
+    4.3
+  ],
+  "bigger_scores_better": true,
+  "validation_score_field": "casanovo:search_engine_score[1]"
+}
