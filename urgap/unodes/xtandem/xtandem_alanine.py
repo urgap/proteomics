@@ -25,7 +25,6 @@ class XtandemAlanine(urgap.unode.UNodeBase):
         "input_uftypes": {
             urgap.uftypes.proteomics.converter.PYMZML_MGF: {"min": 1, "max": 1},
             urgap.uftypes.proteomics.FASTA: {"min": 1, "max": 1},
-            # NOTE: confirm this uftype name/location exists in your urgap install.
             urgap.uftypes.proteomics.dbsearch.XTANDEM_PARAMS: {"min": 1, "max": 1},
         },
         "output_uftypes": {
@@ -64,12 +63,6 @@ class XtandemAlanine(urgap.unode.UNodeBase):
         param_files = utrace.input_files.get_path_objects_by_uftype(
             urgap.uftypes.proteomics.dbsearch.XTANDEM_PARAMS,
         )
-        if len(param_files) != 1:
-            msg = (
-                "Xtandem_Alanine requires exactly one param file to be "
-                "supplied via the XTANDEM_PARAMS input uftype."
-            )
-            raise ValueError(msg)
 
         mgf_file = utrace.input_files.get_path_objects_by_uftype(
             urgap.uftypes.proteomics.converter.PYMZML_MGF,
