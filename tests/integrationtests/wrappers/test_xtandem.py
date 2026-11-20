@@ -30,6 +30,10 @@ def test_searchdb_xtandem_alanine_default_params(tmp_path: Path) -> None:
     search_result = search_node.run([mgf, params, fasta], urd)
     assert search_result[0].path.exists() is True
 
+    tree = ElementTree.parse(search_result[0].path)
+    model_groups = tree.getroot().findall('group[@type="model"]')
+    assert len(model_groups) > 0
+
     sequences = {
         domain.attrib["seq"]
         for group in model_groups
@@ -62,6 +66,10 @@ def test_searchdb_xtandem_alanine__non_default_params(tmp_path: Path) -> None:
     search_node = urgap.init_node("Xtandem_Alanine:1.0.0")
     search_result = search_node.run([mgf, params, fasta], urd)
     assert search_result[0].path.exists() is True
+
+    tree = ElementTree.parse(search_result[0].path)
+    model_groups = tree.getroot().findall('group[@type="model"]')
+    assert len(model_groups) > 0
 
     sequences = {
         domain.attrib["seq"]
